@@ -89,25 +89,6 @@ namespace NethysBot.Services
 
 			var context = new SocketCommandContext(_discord, message);
 
-			if (Regex.IsMatch(message.Content, @"\[\[(.*?)\]\]"))
-			{
-				try
-				{
-					var rolls = Regex.Matches(message.Content, @"\[\[(.*?)\]\]");
-					var sb = new StringBuilder();
-					foreach (Match x in rolls)
-					{
-						var die = Roller.Roll(x.Groups[1].Value);
-						sb.AppendLine("[" + die.Expression + "] " + die.ToString().Split("=>")[1] + " ⇒ **" + die.Value + "**.");
-					}
-					await message.Channel.SendMessageAsync(message.Author.Mention + "\n" + sb.ToString());
-				}
-				catch
-				{
-					await message.AddReactionsAsync(new Emoji[] { new Emoji("🎲"), new Emoji("❔") });
-				}
-			}
-
 			int argPos = 0;
 
 			if(context.Guild != null)
@@ -125,35 +106,21 @@ namespace NethysBot.Services
 				await HandleCommand(context, argPos, _provider);
 			}
 
-			if (Guild != null && !message.HasStringPrefix(Guild.Prefix, ref argPos) && ( !message.HasMentionPrefix(_discord.CurrentUser, ref argPos) || !message.HasStringPrefix("!",ref argPos) )) return;
-
-			var result = await _commands.ExecuteAsync(context, argPos, _provider);
-
-			if (result.Error.HasValue && (result.Error.Value != CommandError.UnknownCommand))
-			{
-				Console.WriteLine(result.Error + "\n" + result.ErrorReason);
-			}
-			if (result.Error.HasValue && result.Error.Value == CommandError.ObjectNotFound)
-			{
-				var msg = await context.Channel.SendMessageAsync("Sorry. " + result.ErrorReason);
-				Cache.Add(context.Message.Id, msg.Id);
-			}
-
 		}
 
 		public async Task HandleCommand(SocketCommandContext Context, int argPos, IServiceProvider provider)
 		{
 			var result = await _commands.ExecuteAsync(Context, argPos, provider);
 
-			if (result.Error.HasValue)
-			{
-				switch (result.Error.Value)
-				{
-					case CommandError.BadArgCount:
-						break;
+			//if (result.Error.HasValue)
+			//{
+			//	switch (result.Error.Value)
+			//	{
+			//		case CommandError.BadArgCount:
+			//			break;
 
-				}
-			}
+			//	}
+			//}
 		}
 	}
 }
