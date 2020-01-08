@@ -11,5 +11,6 @@ namespace NethysBot.Models
 		public int Id { get; set; }
 		public string RemoteId { get; set; }
 		public string Name { get; set; }
+		public string Cache { get; set; }
 	}
 }

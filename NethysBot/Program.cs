@@ -8,12 +8,13 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using NethysBot.Services;
 
 namespace NethysBot
 {
 	class Program
 	{
-		public static LiteDatabase Database = new LiteDatabase(Path.Combine(Directory.GetCurrentDirectory(), "Data", "Database.db"));
+		public static LiteDatabase Database = new LiteDatabase(Path.Combine(Directory.GetCurrentDirectory(), "Database.db"));
 		static void Main(string[] args)
 			=> new Program().MainAsync().GetAwaiter().GetResult();
 
@@ -22,12 +23,11 @@ namespace NethysBot
 
 		public async Task MainAsync()
 		{
-			Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "Data"));
 			_client = new DiscordSocketClient();
 			_config = BuildConfig();
 
 			var services = ConfigureServices();
-			services.GetRequiredService<LogService>();
+			services.GetRequiredService<LoggingService>();
 			await services.GetRequiredService<CommandHandlingService>().InitializeAsync(services);
 
 			await _client.LoginAsync(TokenType.Bot, _config["token"]);
@@ -50,9 +50,8 @@ namespace NethysBot
 				.AddSingleton<CommandHandlingService>()
 				// Logging
 				.AddLogging()
-				.AddSingleton<LogService>()
+				.AddSingleton<LoggingService>()
 				// Extra
-				.AddSingleton(new HelpService(_client))
 				.AddSingleton(_config)
 				.AddSingleton(new InteractiveService(_client))
 				// Add additional services here...
@@ -63,7 +62,7 @@ namespace NethysBot
 		{
 			return new ConfigurationBuilder()
 				.SetBasePath(Directory.GetCurrentDirectory())
-				.AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "Data", "config.json"))
+				.AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "config.json"))
 				.Build();
 		}
 	}

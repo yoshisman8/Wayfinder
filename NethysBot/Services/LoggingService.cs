@@ -17,10 +17,17 @@ namespace NethysBot.Services
 		private readonly ILogger _discordLogger;
 		private readonly ILogger _commandsLogger;
 
-		public LoggingService(DiscordSocketClient discord, CommandService commands, ILoggerFactory loggerFactory)
+		public LoggingService(DiscordSocketClient discord, CommandService commands)
 		{
 			_discord = discord;
 			_commands = commands;
+
+			_loggerFactory = LoggerFactory.Create(builder =>
+			{
+				builder
+					.AddFilter("discord",LogLevel.Information)
+					.AddConsole();
+			});
 
 			_discordLogger = _loggerFactory.CreateLogger("discord");
 			_commandsLogger = _loggerFactory.CreateLogger("commands");
