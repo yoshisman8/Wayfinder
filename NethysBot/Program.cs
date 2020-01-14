@@ -55,6 +55,7 @@ namespace NethysBot
 				.AddSingleton(_config)
 				.AddSingleton(new InteractiveService(_client))
 				// Add additional services here...
+				.AddSingleton<SheetService>()
 				.BuildServiceProvider();
 		}
 

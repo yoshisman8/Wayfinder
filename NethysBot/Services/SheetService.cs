@@ -11,6 +11,10 @@ using System.Net;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using Discord.Commands;
+using NethysBot.Helpers;
+using System.Threading.Tasks.Dataflow;
+using Discord;
+using System.Data;
 
 namespace NethysBot.Services
 {
@@ -27,11 +31,11 @@ namespace NethysBot.Services
 		}
 
 		/// <summary>
-		/// Fetches a character from the given character.pf2.tools URL.
+		/// Fetches a character from the given character.pf2.tools URL and adds it to the database.
 		/// </summary>
 		/// <param name="url">Url of the character</param>
 		/// <returns>Parsed and updated character</returns>
-		public async Task<Character> GetCharacter(string url, SocketCommandContext context = null)
+		public async Task<Character> NewCharacter(string url, SocketCommandContext context = null)
 		{
 			var regex = new Regex(@"(\w*\W*)?\?(\w*)\-?");
 
@@ -51,7 +55,10 @@ namespace NethysBot.Services
 					RemoteId = id
 				};
 
-				if (context != null) c.Owner = context.User.Id;
+				if (context != null)
+				{
+					c.Owners.Add(context.User.Id);
+				}
 
 				collection.Insert(c);
 			}
@@ -79,9 +86,33 @@ namespace NethysBot.Services
 
 			character.Name = (string)json["name"];
 
-			collection.Update(character);
+			if (context != null) 
+			{
+				if (character.Owners.Contains(context.User.Id)) character.Owners.Add(context.User.Id);
+			}
 
-			return character;
+			if (json.ContainsKey("customnotes"))
+			{
+				var notes = from n in json["customnotes"]
+							where (string)n["uuid"] == "character"
+							select n;
+				foreach(var n in notes)
+				{
+					if (((string)n["body"]).IsImageUrl())
+					{
+						character.ImageUrl = (string)n["body"];
+						break;
+					}
+				}
+			}
+
+			collection.Update(character);
+			collection.EnsureIndex(x => x.Name.ToUpper());
+			collection.EnsureIndex(x => x.RemoteId);
+			collection.EnsureIndex(x => x.Type);
+			collection.EnsureIndex(x => x.Owners);
+
+			return collection.FindOne(x => x.RemoteId == id);
 		}
 
 		/// <summary>
@@ -105,7 +136,9 @@ namespace NethysBot.Services
 
 			Character.LastUpdated = DateTime.Now;
 
-			Character.Name = (string)json["name"];
+			Character.Name = json.ContainsKey("name") ? (string)json["name"] : "Unnamed Character";
+
+			Character.Type = Enum.Parse<SheetType>((string)json["type"]);
 
 			collection.Update(Character);
 
@@ -132,6 +165,32 @@ namespace NethysBot.Services
 			collection.Update(Character);
 
 			return Character;
+		}
+		/// <summary>
+		/// Gets the character's full sheet, syncs the sheet when you do so.
+		/// </summary>
+		/// <param name="character"> The character </param>
+		/// <returns> the Embed </returns>
+		public async Task<Embed> GetSheet(Character character)
+		{
+			Character c = await SyncCharacter(character);
+			string url = "https://character.pf2.tools/?" + c.RemoteId;
+
+			var full = JObject.Parse(c.SheetCache);
+			var values = JObject.Parse(c.ValuesCache);
+
+			var embed = new EmbedBuilder()
+				.WithTitle("[" + c.Name + "](" + url + ")")
+				.WithThumbnailUrl(c.ImageUrl);
+			var sb = new StringBuilder();
+
+			sb.AppendLine(Dictionaries.Scores["str"] + " " + (string)values["strength"]["value"] + " (" + ((int)values["strength"]["value"]).PrintModifier() + ")");
+			sb.AppendLine(Dictionaries.Scores["str"] + " " + (string)values["dexterity"]["value"] + " (" + ((int)values["strength"]["value"]).PrintModifier() + ")");
+			sb.AppendLine(Dictionaries.Scores["str"] + " " + (string)values["constitution"]["value"] + " (" + ((int)values["strength"]["value"]).PrintModifier() + ")");
+			sb.AppendLine(Dictionaries.Scores["str"] + " " + (string)values["intelligence"]["value"] + " (" + ((int)values["strength"]["value"]).PrintModifier() + ")");
+			sb.AppendLine(Dictionaries.Scores["str"] + " " + (string)values["wisdom"]["value"] + " (" + ((int)values["strength"]["value"]).PrintModifier() + ")");
+			sb.AppendLine(Dictionaries.Scores["str"] + " " + (string)values["charisma"]["value"] + " (" + ((int)values["strength"]["value"]).PrintModifier() + ")");
+
 		}
 	}
 }

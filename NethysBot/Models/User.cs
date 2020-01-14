@@ -9,10 +9,15 @@ namespace NethysBot.Models
 	{
 		[BsonId]
 		public ulong Id { get; set; }
+		/// <summary>
+		/// The user's current active character
+		/// </summary>
 		[BsonRef("Characters")]
-		public Character ActiveCharacter { get; set; }
-
+		public Character Character { get; set; }
+		/// <summary>
+		/// The user's current active companion
+		/// </summary>
 		[BsonRef("Characters")]
-		public List<Character> Characters { get; set; }
+		public Character Companion { get; set; }
 	}
 }

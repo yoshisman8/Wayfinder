@@ -1,4 +1,5 @@
-﻿using LiteDB;
+﻿using Discord;
+using LiteDB;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,10 +14,10 @@ namespace NethysBot.Models
 		[BsonId]
 		public int Id { get; set; }
 
-		/// <summary>
-		/// id of whoever imported the character.
+		/// <summary> 
+		/// ids of whoever has imported the character.
 		/// </summary>
-		public ulong Owner { get; set; }
+		public List<ulong> Owners { get; set; } = new List<ulong>();
 
 		/// <summary>
 		/// ID on characters.pf2.tools.
@@ -40,5 +41,19 @@ namespace NethysBot.Models
 		/// Date of the last time the sheet was updated.
 		/// </summary>
 		public DateTime LastUpdated { get; set; }
+		/// <summary>
+		/// Whether or not this is a character sheet or a companion sheet.
+		/// </summary>
+		public SheetType Type { get; set; }
+		/// <summary>
+		/// Url of the character's thumbnail image
+		/// </summary>
+		public string ImageUrl { get; set; }
+		/// <summary>
+		/// RGB colors for the embed's sidebar
+		/// </summary>
+		public int[] Color { get; set; } = new int[3];
 	}
+
+	public enum SheetType { character, companion }
 }
