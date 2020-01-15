@@ -13,34 +13,37 @@ using System.Threading.Tasks;
 using NethysBot.Models;
 using Discord.Net.Udp;
 using System.Reflection.Metadata;
+using LiteDB;
 
 namespace NethysBot.Services
 {
-	class CommandHandlingService
+	public class CommandHandlingService
 	{
 		private readonly DiscordSocketClient _discord;
 		private readonly CommandService _commands;
 		private IServiceProvider _provider;
 		private readonly IConfiguration _config;
 		private readonly LoggingService _logService;
+		private LiteDatabase _database;
 
 		public Dictionary<ulong, ulong> Cache { get; set; } = new Dictionary<ulong, ulong>();
-		public CommandHandlingService(LoggingService Logger, IConfiguration config, IServiceProvider provider, DiscordSocketClient discord, CommandService commands)
+		public CommandHandlingService(LoggingService Logger, IConfiguration config, IServiceProvider provider, DiscordSocketClient discord, CommandService commands, LiteDatabase database)
 		{
 			_discord = discord;
 			_commands = commands;
 			_provider = provider;
 			_config = config;
 			_logService = Logger;
+			_database = database;
 
 			_discord.MessageReceived += MessageReceived;
 			_discord.MessageDeleted += OnMessageDeleted;
 			_discord.MessageUpdated += OnMessageUpdated;
 		}
 
-		public async Task<Server> GetOrCreateServer(ulong Id)
+		public Server GetOrCreateServer(ulong Id)
 		{
-			var col = Program.Database.GetCollection<Server>("Servers");
+			var col = _database.GetCollection<Server>("Servers");
 
 			if(!col.Exists(x=>x.Id == Id))
 			{
@@ -99,7 +102,7 @@ namespace NethysBot.Services
 			}
 			else
 			{
-				var Guild = await GetOrCreateServer(context.Guild.Id);
+				var Guild = GetOrCreateServer(context.Guild.Id);
 
 				if (!message.HasStringPrefix(Guild.Prefix, ref argPos) && !message.HasMentionPrefix(_discord.CurrentUser, ref argPos)) return;
 

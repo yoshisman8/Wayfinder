@@ -5,7 +5,7 @@ using System.Text;
 
 namespace NethysBot.Models
 {
-	class User
+	public class User
 	{
 		[BsonId]
 		public ulong Id { get; set; }

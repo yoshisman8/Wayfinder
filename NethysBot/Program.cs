@@ -14,7 +14,6 @@ namespace NethysBot
 {
 	class Program
 	{
-		public static LiteDatabase Database = new LiteDatabase(Path.Combine(Directory.GetCurrentDirectory(), "Database.db"));
 		static void Main(string[] args)
 			=> new Program().MainAsync().GetAwaiter().GetResult();
 
@@ -56,6 +55,7 @@ namespace NethysBot
 				.AddSingleton(new InteractiveService(_client))
 				// Add additional services here...
 				.AddSingleton<SheetService>()
+				.AddSingleton(new LiteDatabase(Path.Combine(Directory.GetCurrentDirectory(), "Database.db")))
 				.BuildServiceProvider();
 		}
 

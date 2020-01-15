@@ -8,7 +8,7 @@ using System.Text;
 
 namespace NethysBot.Helpers
 {
-	static class Helpers
+	public static class Helpers
 	{
 		public static bool IsImageUrl(this string URL)
 		{
@@ -39,11 +39,34 @@ namespace NethysBot.Helpers
 		public static string PrintModifier(this  int score)
 		{
 			int modifier = (int)Math.Floor((decimal)((score - 10) / 2));
-			return modifier > 0 ? "+" + modifier : modifier.ToString();
+			return modifier >= 0 ? "+" + modifier : modifier.ToString();
 		}
-	}
+		public static string ToModifierString(this int value)
+		{
+			return value >= 0 ? "+" + value : value.ToString();
+		}
 
-	public static class Dictionaries
+		public static string FixLength(this string text, int length, TextPadding padding = TextPadding.After)
+		{
+			if (text.Length >= length) return text.Substring(0,length);
+
+			switch (padding)
+			{
+				case TextPadding.After:
+					string after = text.PadRight(length, '\u2002');
+					return after;
+				case TextPadding.Before:
+					string before = text.PadLeft(length, '\u2002');
+					return before;
+				default:
+					string def = text.PadRight(length);
+					return def;
+			}
+		}
+		
+	}
+	public enum TextPadding { Before, After }
+	public static class Icons
 	{
 		public static Dictionary<int, string> d20 { get; set; } = new Dictionary<int, string>()
 		{
@@ -126,12 +149,29 @@ namespace NethysBot.Helpers
 
 		public static Dictionary<string, string> Scores { get; set; } = new Dictionary<string, string>()
 		{
-			{"str", "<:str:666744920794595338>" },
-			{"dex", "<:dex:666744920588943363>" },
-			{"con", "<:con:666744920593268757>" },
-			{"int", "<:int:666744920828280832>" },
-			{"wis", "<:wis:666744920836407385>" },
-			{"cha", "<:cha:666744920438210561>" }
+			{"strength", "<:str:666744920794595338>" },
+			{"dexterity", "<:dex:666744920588943363>" },
+			{"constitution", "<:con:666744920593268757>" },
+			{"intelligence", "<:int:666744920828280832>" },
+			{"wisdom", "<:wis:666744920836407385>" },
+			{"charisma", "<:cha:666744920438210561>" }
+		};
+		public static Dictionary<string, string> Sheet { get; set; } = new Dictionary<string, string>()
+		{
+			{"fort", "<:fortitude:666995019902615572>" },
+			{"ref", "<:reflex:666995418235666432>" },
+			{"will", "<:will:666995701703770121>" },
+			{"ac", "<:ac:666996197583486996>" },
+			{"per", "<:perception:666997096406056960>" },
+			{"hp", "<:hp:666992409506349057>" }
+		};
+		public static Dictionary<string, string> Proficiency { get; set; } = new Dictionary<string, string>()
+		{
+			{"u", "<:untrained:667099544403705866>" },
+			{"t", "<:trained:667098236498214912>" },
+			{"e", "<:expert:667098236116533273>" },
+			{"m", "<:master:667098236468854844>" },
+			{"l", "<:legendary:667098236439363584>" }
 		};
 	}
 }

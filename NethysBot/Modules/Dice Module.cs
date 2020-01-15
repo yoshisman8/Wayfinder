@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace NethysBot.Modules
 {
-	class Dice_Module : NethysBase<SocketCommandContext>
+	public class Dice_Module : NethysBase<SocketCommandContext>
 	{
 		private Regex DiceRegex = new Regex(@"(\d?[dD]\d)+\s*((\+|\-|)?\s*(\d+)?)*");
 		private Regex AttributeRegex = new Regex(@"(\{(\w+)\})");

@@ -5,7 +5,7 @@ using LiteDB;
 
 namespace NethysBot.Models
 {
-	class Server
+	public class Server
 	{
 		[BsonId]
 		public ulong Id { get; set; }

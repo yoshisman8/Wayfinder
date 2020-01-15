@@ -7,21 +7,20 @@ using NethysBot.Models;
 using NethysBot.Services;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace NethysBot.Helpers
 {
-	class NethysBase<T> : InteractiveBase<T>
+	public class NethysBase<T> : InteractiveBase<T>
 		where T : SocketCommandContext
 	{
 		public CommandHandlingService Command { get; set; }
 
 		public SheetService SheetService { get; set; }
-
-		public LiteCollection<User> Users { get; set; } = Program.Database.GetCollection<User>("Users");
-		public LiteCollection<Character> Characters { get; set; } = Program.Database.GetCollection<Character>("Characters");
+		public LiteDatabase Database { get; set; }
 
 		public async Task<RestUserMessage> ReplyAsync(string Content, Embed Embed = null, bool isTTS = false)
 		{
@@ -70,6 +69,8 @@ namespace NethysBot.Helpers
 		{
 			var user = GetUser();
 
+			var Characters = Database.GetCollection<Character>("Characters");
+
 			var chars = Characters.Find(x => x.Owners.Contains(user.Id));
 
 			return chars.ToList();
@@ -81,6 +82,8 @@ namespace NethysBot.Helpers
 		/// <returns>The user</returns>
 		public User GetUser()
 		{
+			var Users = Database.GetCollection<User>("Users");
+
 			if(!Users.Exists(x => x.Id == Context.User.Id))
 			{
 				Users.Insert(new User()
@@ -92,6 +95,13 @@ namespace NethysBot.Helpers
 			var user = Users.Include(x => x.Character).Include(x => x.Companion).FindOne(x => x.Id == Context.User.Id);
 
 			return user;
+		}
+
+		public void UpdateUser(User user)
+		{
+			var Users = Database.GetCollection<User>("Users");
+
+			Users.Update(user);
 		}
 	}
 }

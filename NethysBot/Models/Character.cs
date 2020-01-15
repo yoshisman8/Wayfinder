@@ -6,7 +6,7 @@ using System.Text;
 
 namespace NethysBot.Models
 {
-	class Character
+	public class Character
 	{
 		/// <summary>
 		/// Internal ID.

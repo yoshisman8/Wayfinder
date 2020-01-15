@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace NethysBot.Services
 {
-	class LoggingService
+	public class LoggingService
 	{
 		private readonly DiscordSocketClient _discord;
 		private readonly CommandService _commands;

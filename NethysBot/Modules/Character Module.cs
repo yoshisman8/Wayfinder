@@ -3,6 +3,7 @@ using Discord.Commands;
 using LiteDB;
 using NethysBot.Helpers;
 using NethysBot.Services;
+using NethysBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace NethysBot.Modules
 {
-	class Character_Module : NethysBase<SocketCommandContext>
+	public class Character_Module : NethysBase<SocketCommandContext>
 	{
 
 		[Command("Import")]
@@ -35,13 +36,64 @@ namespace NethysBot.Modules
 						break;
 				}
 
-				Users.Update(user);
+				UpdateUser(user);
 			}
 			catch(Exception e)
 			{
 				await ReplyAsync(Context.User.Mention + ", " + e.Message);
 			}
 
+		}
+
+		[Command("Sheet")]
+		[Summary("Display your character sheet.")]
+		public async Task GetSheet()
+		{
+			var c = GetCharacter();
+
+			if(c == null)
+			{
+				await ReplyAsync("You have no active character.");
+				return;
+			}
+
+			var embed = await SheetService.GetSheet(c);
+
+			await ReplyAsync("", embed);
+		}
+
+		[Command("Character"), Alias("Active","Char")]
+		[Summary("See who your active character is, or change it to a different one.")]
+		public async Task ActiveChar([Remainder] string Name = null)
+		{
+			if (Name.NullorEmpty())
+			{
+				var c = GetCharacter();
+
+				string current = c != null ? "Active Character: "+c.Name : "You have no active character.";
+
+				await ReplyAsync(current);
+				return;
+			}
+
+
+		}
+
+		[Command("Sync"), Alias("Update")]
+		[Summary("Sync your current character to match the version on Characters.pf2.tools.")]
+		public async Task Sync()
+		{
+			var c = GetCharacter();
+
+			if (c == null)
+			{
+				await ReplyAsync("You have no active character.");
+				return;
+			}
+
+			await SheetService.SyncCharacter(c);
+
+			await ReplyAsync("Character Updated.");
 		}
 	}
 }
