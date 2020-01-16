@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace NethysBot.Modules
 {
+	[Name("Sheet Management")]
 	public class Character_Module : NethysBase<SocketCommandContext>
 	{
 

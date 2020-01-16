@@ -64,6 +64,21 @@ namespace NethysBot.Helpers
 			}
 		}
 		
+		public static string Uppercase(this string text)
+		{
+			if(text.NullorEmpty())
+			{
+				return text;
+			}
+			else if(text.Length == 1)
+			{
+				return text.ToUpper();
+			}
+			else
+			{
+				return char.ToUpper(text[0]) + text.Substring(1);
+			}
+		}
 	}
 	public enum TextPadding { Before, After }
 	public static class Icons
@@ -163,15 +178,28 @@ namespace NethysBot.Helpers
 			{"will", "<:will:666995701703770121>" },
 			{"ac", "<:ac:666996197583486996>" },
 			{"per", "<:perception:666997096406056960>" },
-			{"hp", "<:hp:666992409506349057>" }
+			{"hp", "<:hp:666992409506349057>" },
+			{"land", "<:land:667370170146226188>" },
+			{"burrow", "<:burrow:667370169290457098>" },
+			{"swim", "<:swim:667370169777127453>" },
+			{"fly", "<:fly:667370169252839435>" },
+			{"climb" , "<:climb:667370169613680650>" }
 		};
 		public static Dictionary<string, string> Proficiency { get; set; } = new Dictionary<string, string>()
 		{
-			{"u", "<:untrained:667099544403705866>" },
-			{"t", "<:trained:667098236498214912>" },
-			{"e", "<:expert:667098236116533273>" },
-			{"m", "<:master:667098236468854844>" },
-			{"l", "<:legendary:667098236439363584>" }
+			{"u", "<:untrained:667472897656356886>" },
+			{"t", "<:trained:667472897748762624>" },
+			{"e", "<:expert:667472897761345559>" },
+			{"m", "<:master:667472897811546157>" },
+			{"l", "<:legendary:667472897777860638>" }
+		};
+		public static Dictionary<string, string> Actions { get; set; } = new Dictionary<string, string>()
+		{
+			{"f", "<:free_action:667465200697475083>" },
+			{"1", "<:1_action:667465200974299146>" },
+			{"2", "<:2_actions:667465200672178207>" },
+			{"3", "<:3_actions:667465200814915616>" },
+			{"r", "<:reaction:667465201192271943>" }
 		};
 	}
 }

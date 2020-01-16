@@ -199,6 +199,8 @@ namespace NethysBot.Services
 		{
 			string url = "https://character.pf2.tools/?" + c.RemoteId;
 
+			c = await SyncCharacter(c);
+
 			var full = JObject.Parse(c.SheetCache);
 			var values = JObject.Parse(c.ValuesCache);
 
@@ -242,35 +244,202 @@ namespace NethysBot.Services
 			embed.AddField("Defenses", sb.ToString(), true);
 			sb.Clear();
 
-			var skills = from sk in full["skills"] where (string)sk["proficiency"] != "u" select sk;
-
-			foreach (var s in skills)
-			{
-				if (!((string)s["lore"]).NullorEmpty())
-				{
-					int bonus = int.Parse((string)values[((string)s["lore"]).ToLower()]["value"] ?? "0");
-					sb.Append(s["lore"] + " " + Icons.Proficiency[(string)s["proficiency"]] + " " + bonus.ToModifierString() + ", ");
-				}
-				else
-				{
-					int bonus = int.Parse((string)values[((string)s["name"]).ToLower()]["value"] ?? "0");
-					sb.Append(s["name"] + " " + Icons.Proficiency[(string)s["proficiency"]] + " " + bonus.ToModifierString() + ", ");
-				}
-			}
-			embed.AddField("Skills", sb.ToString().Trim().Substring(0, sb.Length - 2));
-			sb.Clear();
-
-
 			var conditions = from con in full["conditions"]
 							 where con["value"] != null
 							 select con;
-			if(conditions.Count() > 0)
+			if (conditions.Count() > 0)
 			{
-				foreach(var con in conditions)
+				foreach (var con in conditions)
 				{
 					sb.AppendLine(con["name"] + " " + (int)con["value"]);
 				}
-				embed.AddField("Conditions", sb.ToString());
+				embed.AddField("Conditions", sb.ToString(), true);
+
+				sb.Clear();
+			}
+
+			sb.Append(Icons.Sheet["land"] + " " + (full["speeds"][0]["value"] != null ? full["speeds"][0]["value"] + " ft" : "—") + " " );
+			sb.Append(Icons.Sheet["swim"] + " " + (full["speeds"][1]["value"] != null ? full["speeds"][1]["value"] + " ft" : "—") + " ");
+			sb.Append(Icons.Sheet["climb"] + " " + (full["speeds"][2]["value"] != null ? full["speeds"][2]["value"] + " ft" : "—") + " ");
+			sb.Append(Icons.Sheet["fly"] + " " + (full["speeds"][3]["value"] != null ? full["speeds"][3]["value"] + " ft" : "—") + " ");
+			sb.Append(Icons.Sheet["burrow"] + " " + (full["speeds"][4]["value"] != null ? full["speeds"][4]["value"] + " ft" : "—") + " ");
+
+			embed.AddField("Speeds", sb.ToString());
+			sb.Clear();
+
+			var skills = full["skills"].OrderBy(x=>x["name"]).ToList();
+			int sktotal = skills.Count();
+			int index = 0;
+
+			double cycles = Math.Ceiling(sktotal / 6.0);
+			
+			for (int i = 0; i < cycles; i++)
+			{
+				for (int j = 0; j < 6 && index < sktotal; j++)
+				{
+					if (!((string)skills[index]["lore"]).NullorEmpty())
+					{
+						int bonus = int.Parse((string)values[((string)skills[index]["lore"]).ToLower()]["value"] ?? "0");
+						sb.AppendLine(Icons.Scores[(string)skills[index]["ability"]] + " " + ((string)skills[index]["lore"]).Substring(0,Math.Min(9, ((string)skills[index]["lore"]).Length)).Uppercase() + " " + Icons.Proficiency[(string)skills[index]["proficiency"]] + " " + bonus.ToModifierString());
+					}
+					else
+					{
+						int bonus = int.Parse((string)values[((string)skills[index]["name"]).ToLower()]["value"] ?? "0");
+						sb.AppendLine(Icons.Scores[(string)skills[index]["ability"]] + " " + ((string)skills[index]["name"]).Substring(0, Math.Min(9, ((string)skills[index]["name"]).Length)).Uppercase() + " " + Icons.Proficiency[(string)skills[index]["proficiency"]] + " " + bonus.ToModifierString());
+					}
+					index++;
+				}
+				embed.AddField("Skills", sb.ToString(), true);
+				sb.Clear();
+			}
+
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+
+			embed.WithFooter("Last synced: " + c.LastUpdated.ToString());
+
+			return embed.Build();
+		}
+
+		public async Task<Embed> GetFeat(Character c, string name)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId + "/feats");
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var feats = from f in json["data"] 
+						where ((string)f["name"]).ToLower().StartsWith(name.ToLower()) 
+						select f;
+
+			if (feats.Count() <= 0) return null;
+
+			var feat = feats.First();
+
+			string body = (string)feat["body"]??"No Description";
+
+			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
+				.Replace("(aaa)", Icons.Actions["3"])
+				.Replace("(f)", Icons.Actions["f"])
+				.Replace("(r)", Icons.Actions["r"]);
+
+			var embed = new EmbedBuilder()
+				.WithTitle((string)feat["name"]??"Unammed Feat")
+				.AddField("Traits",feat["traits"]??"N/A",true)
+				.AddField("Type",((string)feat["subtype"]??"Feat").Uppercase()+" "+feat["level"],true)
+				.AddField("Description",body);
+
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+
+			return embed.Build();
+		}
+
+		public async Task<Embed> GetAllFeats(Character c)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId + "/feats");
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var feats = json["data"].Children();
+
+			var embed = new EmbedBuilder()
+				.WithTitle(c.Name + "'s Feats");
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+
+			var sb = new StringBuilder();
+
+			foreach(var f in feats)
+			{
+				sb.AppendLine("• "+(f["name"]??"Unnamed Feat") + " " + ((string)f["subtype"] ?? "Feat").Uppercase() + " " + f["level"]);
+			}
+
+			embed.WithDescription(sb.ToString());
+
+			return embed.Build();
+		}
+
+		public async Task<Embed> GetAbility(Character c, string name)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId + "/features");
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var features = from fs in json["data"]
+						where ((string)fs["name"]).ToLower().StartsWith(name.ToLower())
+						select fs;
+
+			if (features.Count() <= 0) return null;
+
+			var f = features.First();
+
+			string body = (string)f["body"] ?? "No Description";
+
+			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
+				.Replace("(aaa)", Icons.Actions["3"])
+				.Replace("(f)", Icons.Actions["f"])
+				.Replace("(r)", Icons.Actions["r"]);
+
+			var embed = new EmbedBuilder()
+				.WithTitle((string)f["name"] ?? "Unammed Feature")
+				.AddField("Type", ((string)f["type"]??"Feature")+" "+f["level"])
+				.AddField("Description", body);
+
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
 			}
 
 			return embed.Build();

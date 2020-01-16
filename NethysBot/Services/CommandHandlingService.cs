@@ -94,7 +94,7 @@ namespace NethysBot.Services
 
 			int argPos = 0;
 
-			if(context.Guild != null)
+			if(context.Guild == null)
 			{
 				if (!message.HasStringPrefix("!", ref argPos) && !message.HasMentionPrefix(_discord.CurrentUser, ref argPos)) return;
 

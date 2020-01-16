@@ -52,7 +52,7 @@ namespace NethysBot.Models
 		/// <summary>
 		/// RGB colors for the embed's sidebar
 		/// </summary>
-		public int[] Color { get; set; } = new int[3];
+		public int[] Color { get; set; } = null;
 	}
 
 	public enum SheetType { character, companion }
