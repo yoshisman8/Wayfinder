@@ -44,5 +44,38 @@ namespace NethysBot.Modules
 			await ReplyAsync("", f);
 			return;
 		}
+		[Command("Feature"), Alias("Features")]
+		[Summary("Lookup a feature on your active character. Or list all of them if used with no arguments.")]
+		public async Task getfeature([Remainder] string Name = null)
+		{
+			var c = GetCharacter();
+
+			if (c == null)
+			{
+				await ReplyAsync("You have no active character.");
+				return;
+			}
+
+			if (Name.NullorEmpty())
+			{
+				var fs = await SheetService.GetAllFeatures(c);
+				if (fs == null)
+				{
+					await ReplyAsync(c.Name + " has no features.");
+					return;
+				}
+				await ReplyAsync("", fs);
+				return;
+			}
+
+			var f = await SheetService.GetAbility(c, Name);
+			if (f == null)
+			{
+				await ReplyAsync(c.Name + " has no feature that start with that name.");
+				return;
+			}
+			await ReplyAsync("", f);
+			return;
+		}
 	}
 }

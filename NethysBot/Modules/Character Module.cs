@@ -7,7 +7,10 @@ using NethysBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
+using System.IO.Pipes;
 
 namespace NethysBot.Modules
 {
@@ -77,6 +80,32 @@ namespace NethysBot.Modules
 				return;
 			}
 
+			var chars = GetAllCharacter();
+
+			var results = chars.Where(x => x.Name.ToLower().StartsWith(Name.ToLower()));
+
+			if(results.Count() == 0)
+			{
+				await ReplyAsync("You have no characters whose name starts with that.");
+				return;
+			}
+
+			if(results.Count() == 1)
+			{
+				var u = GetUser();
+
+				var c = results.FirstOrDefault();
+
+				switch (c.Type)
+				{
+					case SheetType.character:
+						u.Character = c;
+						break;
+					case SheetType.companion:
+						u.Companion = c;
+						break;
+				}
+			}
 
 		}
 

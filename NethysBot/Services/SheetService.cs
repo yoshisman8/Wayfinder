@@ -341,7 +341,8 @@ namespace NethysBot.Services
 				.WithTitle((string)feat["name"]??"Unammed Feat")
 				.AddField("Traits",feat["traits"]??"N/A",true)
 				.AddField("Type",((string)feat["subtype"]??"Feat").Uppercase()+" "+feat["level"],true)
-				.AddField("Description",body);
+				.AddField("Description",body)
+				.WithThumbnailUrl(c.ImageUrl);
 
 			if (c.Color == null)
 			{
@@ -373,7 +374,8 @@ namespace NethysBot.Services
 			var feats = json["data"].Children();
 
 			var embed = new EmbedBuilder()
-				.WithTitle(c.Name + "'s Feats");
+				.WithTitle(c.Name + "'s Feats")
+				.WithThumbnailUrl(c.ImageUrl);
 			if (c.Color == null)
 			{
 				Random randonGen = new Random();
@@ -390,7 +392,7 @@ namespace NethysBot.Services
 
 			foreach(var f in feats)
 			{
-				sb.AppendLine("• "+(f["name"]??"Unnamed Feat") + " " + ((string)f["subtype"] ?? "Feat").Uppercase() + " " + f["level"]);
+				sb.AppendLine("• "+(f["name"]??"Unnamed Feat") + " (" + ((string)f["subtype"] ?? "Feat").Uppercase() + " " + f["level"]+")");
 			}
 
 			embed.WithDescription(sb.ToString());
@@ -428,7 +430,8 @@ namespace NethysBot.Services
 			var embed = new EmbedBuilder()
 				.WithTitle((string)f["name"] ?? "Unammed Feature")
 				.AddField("Type", ((string)f["type"]??"Feature")+" "+f["level"])
-				.AddField("Description", body);
+				.AddField("Description", body)
+				.WithThumbnailUrl(c.ImageUrl);
 
 			if (c.Color == null)
 			{
@@ -441,6 +444,156 @@ namespace NethysBot.Services
 			{
 				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
 			}
+
+			return embed.Build();
+		}
+		public async Task<Embed> GetAllFeatures(Character c)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId + "/features");
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var feats = json["data"].Children();
+
+			var embed = new EmbedBuilder()
+				.WithTitle(c.Name + "'s Features")
+				.WithThumbnailUrl(c.ImageUrl);
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+
+			var sb = new StringBuilder();
+
+			foreach (var f in feats)
+			{
+				sb.AppendLine("• " + (f["name"] ?? "Unnamed Feature") + " (" + ((string)f["subtype"] ?? "Feature").Uppercase() + " " + f["level"]+")");
+			}
+
+			embed.WithDescription(sb.ToString());
+
+			return embed.Build();
+		}
+
+		public async Task<Embed> GetAction(Character c, string name)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId + "/activities");
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var features = from fs in json["data"]
+						   where ((string)fs["name"]).ToLower().StartsWith(name.ToLower())
+						   select fs;
+
+			if (features.Count() <= 0) return null;
+
+			var f = features.First();
+
+			string body = (string)f["body"] ?? "No Description";
+
+			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
+				.Replace("(aaa)", Icons.Actions["3"])
+				.Replace("(f)", Icons.Actions["f"])
+				.Replace("(r)", Icons.Actions["r"]);
+
+			var embed = new EmbedBuilder()
+				.WithTitle((string)f["name"] ?? "Unammed Activity")
+				.AddField("Description", body)
+				.WithThumbnailUrl(c.ImageUrl);
+
+			var act = (string)f["actions"];
+
+			if (act != null)
+			{
+				if(Icons.Actions.TryGetValue(act, out string icon))
+				{
+					embed.AddField("Actions", icon);
+				}
+				else
+				{
+					embed.AddField("Actions", act);
+				}
+			}
+
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+
+			return embed.Build();
+		}
+		public async Task<Embed> GetAllActions(Character c)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId + "/activities");
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var feats = json["data"].Children();
+
+			var embed = new EmbedBuilder()
+				.WithTitle(c.Name + "'s Actions")
+				.WithThumbnailUrl(c.ImageUrl);
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+
+			var sb = new StringBuilder();
+
+			foreach (var f in feats)
+			{
+				var act = (string)f["actions"];
+
+				if (act != null)
+				{
+					if (Icons.Actions.TryGetValue(act, out string icon))
+					{
+						act = icon;
+					}
+				}
+				sb.AppendLine("• " + (f["name"] ?? "Unnamed Activity") + " " + act??"");
+			}
+
+			embed.WithDescription(sb.ToString());
 
 			return embed.Build();
 		}
