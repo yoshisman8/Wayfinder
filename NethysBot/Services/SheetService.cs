@@ -597,5 +597,121 @@ namespace NethysBot.Services
 
 			return embed.Build();
 		}
+
+		public async Task<Embed> Inventory(Character c)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId);
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var pp = json["data"]["pp"] ?? 0;
+			var gp = json["data"]["gp"] ?? 0;
+			var sp = json["data"]["sp"] ?? 0;
+			var cp = json["data"]["cp"] ?? 0;
+
+			var embed = new EmbedBuilder()
+				.WithTitle(c.Name + "'s Inventory")
+				.AddField("Currency","CP "+cp+" | SP "+ sp+" | GP "+gp+" | PP "+pp)
+				.WithThumbnailUrl(c.ImageUrl);
+
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+
+			if (json["data"]["items"].HasValues)
+			{
+				var items = json["data"]["items"].Children();
+				var sb = new StringBuilder();
+				foreach (var i in items)
+				{
+					sb.AppendLine("• " + (i["name"] ?? "Unnamed Item") + " [" + (i["type"] ?? "Item") + " " + (i["level"]??1) + "] x"+(i["quantity"]??1));
+				}
+
+				embed.AddField("Items", sb.ToString());
+			}
+
+			return embed.Build();
+		}
+
+		public async Task<Embed> GetItem(Character c, string Name)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId + "/items");
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var items = from it in json["data"]
+						where it["name"] != null && ((string)it["name"]).ToLower().StartsWith(Name.ToLower())
+						orderby (string)it["name"]
+						select it;
+			if (items.Count() == 0) return null;
+
+			var i = items.FirstOrDefault();		
+
+			var embed = new EmbedBuilder()
+				.WithTitle((string)i["name"] ?? "Unammed Item")
+				.AddField("Traits",i["traits"]??"No Traits",true)
+				.AddField("Type", (i["type"]??"Item")+" "+(i["level"]??0),true)
+				.AddField("Status",Icons.Sheet["hp"]+" HP "+((int)i["hp"] - (int)(i["damage"]??0))+"/"+i["hp"]+
+					"\n"+Icons.Sheet["ac"]+" Hardness "+i["hardness"],true)
+				.WithDescription("Price: " + (i["price"] ?? 0) + " " + i["priceunit"]+"\n"+
+					"Bulk: "+(i["bulk"]??0));
+			if((string)i["type"] == "armor" || (string)i["type"] == "shield")
+			{
+				embed.AddField("Armor bonus", "**Category**: "+(i["category"]??"Uncategorized")+
+					"\n**AC bonus**: " + (i["acbonus"] ?? 0)+
+					"\n**Maximum Dexterity Bonus**: "+(i["dexcap"]??"-")+
+					"\n**Armor Check Penalty**: "+(i["checkpenalty"]??0)+
+					"\n**Speed Penalty**: "+(i["speedpenalty"]??0)+"ft"+
+					"\n**Strength**: "+(i["strength"]??0));
+			}
+			if ((string)i["type"] == "weapon")
+			{
+				embed.AddField("Weapon Statistics", "**Group**: " + (i["group"] ?? "-") + "; " +
+					"**Category**: " + (i["category"] ?? "Uncategorizes") +
+					"\n**Damage**: 1" + (i["damagedie"] ?? "d6") + " " + (i["damagetype"] ?? "Untyped"));
+			}
+
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+
+			string body = (string)i["body"] ?? "No Description";
+
+			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
+				.Replace("(aaa)", Icons.Actions["3"])
+				.Replace("(f)", Icons.Actions["f"])
+				.Replace("(r)", Icons.Actions["r"]);
+
+			embed.AddField("Description", body);
+			return embed.Build();
+		}
 	}
 }
