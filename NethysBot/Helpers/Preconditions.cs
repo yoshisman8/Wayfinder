@@ -29,4 +29,6 @@ namespace NethysBot.Helpers
 			return Task.FromResult(PreconditionResult.FromSuccess());
 		}
 	}
+
+
 }

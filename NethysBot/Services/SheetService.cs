@@ -25,11 +25,12 @@ namespace NethysBot.Services
 		private LiteCollection<Character> collection;
 		private HttpClient Client;
 		private string Api = "http://character.pf2.tools/api/characters/";
-		
-		public SheetService(LiteDatabase database)
+		private SRD SRD;
+		public SheetService(LiteDatabase database, SRD _srd)
 		{
 			Client = new HttpClient();
 			collection = database.GetCollection<Character>("Characters");
+			SRD = _srd;
 		}
 
 		/// <summary>
@@ -208,6 +209,7 @@ namespace NethysBot.Services
 				.WithTitle(c.Name)
 				.WithUrl(url)
 				.WithThumbnailUrl(c.ImageUrl);
+			
 			var sb = new StringBuilder();
 			sb.AppendLine("Lv" + (string)full["level"] + (((string)full["ancestry"]).NullorEmpty()? "" : " " + (string)full["ancestry"]) + (full["classes"].HasValues ? " "+(string)full["classes"][0]["name"]:" Adventurer"));
 			sb.AppendLine(Icons.Sheet["hp"] + " HP `" + ((int)values["hp"]["value"] - (int)(full["damage"]??0))+ "/" + values["hp"]["value"]+"`");
@@ -310,6 +312,7 @@ namespace NethysBot.Services
 			return embed.Build();
 		}
 
+		#region Feats
 		public async Task<Embed> GetFeat(Character c, string name)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId + "/feats");
@@ -322,27 +325,24 @@ namespace NethysBot.Services
 
 			if (!json["data"].HasValues) return null;
 
-			var feats = from f in json["data"] 
-						where ((string)f["name"]).ToLower().StartsWith(name.ToLower()) 
+			var feats = from f in json["data"]
+						where ((string)f["name"]).ToLower().StartsWith(name.ToLower())
+						orderby (string)f["name"]
 						select f;
 
 			if (feats.Count() <= 0) return null;
 
 			var feat = feats.First();
 
-			string body = (string)feat["body"]??"No Description";
+			var embed = SRD.EmbedFeat(feat);
 
-			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
-				.Replace("(aaa)", Icons.Actions["3"])
-				.Replace("(f)", Icons.Actions["f"])
-				.Replace("(r)", Icons.Actions["r"]);
+			embed.WithThumbnailUrl(c.ImageUrl);
 
-			var embed = new EmbedBuilder()
-				.WithTitle((string)feat["name"]??"Unammed Feat")
-				.AddField("Traits",feat["traits"]??"N/A",true)
-				.AddField("Type",((string)feat["subtype"]??"Feat").Uppercase()+" "+feat["level"],true)
-				.AddField("Description",body)
-				.WithThumbnailUrl(c.ImageUrl);
+			if (feat["src"] != null)
+			{
+				embed.WithFooter((string)feat["src"]);
+				embed.WithUrl((string)feat["src"]);
+			}
 
 			if (c.Color == null)
 			{
@@ -357,8 +357,7 @@ namespace NethysBot.Services
 			}
 
 			return embed.Build();
-		}
-
+		}	
 		public async Task<Embed> GetAllFeats(Character c)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId + "/feats");
@@ -399,7 +398,9 @@ namespace NethysBot.Services
 
 			return embed.Build();
 		}
+		#endregion
 
+		#region Features
 		public async Task<Embed> GetFeature(Character c, string name)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId + "/features");
@@ -414,24 +415,16 @@ namespace NethysBot.Services
 
 			var features = from fs in json["data"]
 						where ((string)fs["name"]).ToLower().StartsWith(name.ToLower())
+						orderby (string)fs["name"]
 						select fs;
 
 			if (features.Count() <= 0) return null;
 
 			var f = features.First();
 
-			string body = (string)f["body"] ?? "No Description";
+			var embed = SRD.EmbedFeature(f);
 
-			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
-				.Replace("(aaa)", Icons.Actions["3"])
-				.Replace("(f)", Icons.Actions["f"])
-				.Replace("(r)", Icons.Actions["r"]);
-
-			var embed = new EmbedBuilder()
-				.WithTitle((string)f["name"] ?? "Unammed Feature")
-				.AddField("Type", ((string)f["type"]??"Feature")+" "+f["level"])
-				.AddField("Description", body)
-				.WithThumbnailUrl(c.ImageUrl);
+			embed.WithThumbnailUrl(c.ImageUrl);
 
 			if (c.Color == null)
 			{
@@ -446,7 +439,7 @@ namespace NethysBot.Services
 			}
 
 			return embed.Build();
-		}
+		}	
 		public async Task<Embed> GetAllFeatures(Character c)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId + "/features");
@@ -487,7 +480,9 @@ namespace NethysBot.Services
 
 			return embed.Build();
 		}
+		#endregion
 
+		#region Actions
 		public async Task<Embed> GetAction(Character c, string name)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId + "/activities");
@@ -502,37 +497,16 @@ namespace NethysBot.Services
 
 			var features = from fs in json["data"]
 						   where ((string)fs["name"]).ToLower().StartsWith(name.ToLower())
+						   orderby fs["name"]
 						   select fs;
 
 			if (features.Count() <= 0) return null;
 
 			var f = features.First();
 
-			string body = (string)f["body"] ?? "No Description";
+			var embed = SRD.EmbedAction(f);
 
-			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
-				.Replace("(aaa)", Icons.Actions["3"])
-				.Replace("(f)", Icons.Actions["f"])
-				.Replace("(r)", Icons.Actions["r"]);
-
-			var embed = new EmbedBuilder()
-				.WithTitle((string)f["name"] ?? "Unammed Activity")
-				.AddField("Description", body)
-				.WithThumbnailUrl(c.ImageUrl);
-
-			var act = (string)f["actions"];
-
-			if (act != null)
-			{
-				if(Icons.Actions.TryGetValue(act, out string icon))
-				{
-					embed.AddField("Actions", icon);
-				}
-				else
-				{
-					embed.AddField("Actions", act);
-				}
-			}
+			embed.WithThumbnailUrl(c.ImageUrl);
 
 			if (c.Color == null)
 			{
@@ -545,7 +519,7 @@ namespace NethysBot.Services
 			{
 				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
 			}
-
+			
 			return embed.Build();
 		}
 		public async Task<Embed> GetAllActions(Character c)
@@ -594,10 +568,47 @@ namespace NethysBot.Services
 			}
 
 			embed.WithDescription(sb.ToString());
-
+			
 			return embed.Build();
 		}
+		#endregion
 
+		#region Items
+		public async Task<Embed> GetItem(Character c, string Name)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId + "/items");
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var items = from it in json["data"]
+						where it["name"] != null && ((string)it["name"]).ToLower().StartsWith(Name.ToLower())
+						orderby (string)it["name"]
+						select it;
+			if (items.Count() == 0) return null;
+
+			var i = items.FirstOrDefault();
+
+			var embed = SRD.EmbedItem(i);
+
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+			return embed.Build();
+		}	
 		public async Task<Embed> Inventory(Character c)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId);
@@ -646,10 +657,12 @@ namespace NethysBot.Services
 
 			return embed.Build();
 		}
+		#endregion
 
-		public async Task<Embed> GetItem(Character c, string Name)
+		#region Spells
+		public async Task<Embed> GetSpell(Character c, string Name)
 		{
-			var request = await Client.GetAsync(Api + c.RemoteId + "/items");
+			var request = await Client.GetAsync(Api + c.RemoteId + "/spells");
 
 			request.EnsureSuccessStatusCode();
 
@@ -659,61 +672,18 @@ namespace NethysBot.Services
 
 			if (!json["data"].HasValues) return null;
 
-			var items = from it in json["data"]
-						where it["name"] != null && ((string)it["name"]).ToLower().StartsWith(Name.ToLower())
-						orderby (string)it["name"]
-						select it;
-			if (items.Count() == 0) return null;
+			var spells = from it in json["data"]
+						 where it["name"] != null && ((string)it["name"]).ToLower().StartsWith(Name.ToLower())
+						 orderby (string)it["name"]
+						 select it;
+			if (spells.Count() == 0) return null;
 
-			var i = items.FirstOrDefault();		
+			var s = spells.FirstOrDefault();
 
-			var embed = new EmbedBuilder()
-				.WithTitle((string)i["name"] ?? "Unammed Item")
-				.AddField("Traits",i["traits"]??"No Traits",true)
-				.AddField("Type", (i["type"]??"Item")+" "+(i["level"]??0),true)
-				.AddField("Status",Icons.Sheet["hp"]+" HP "+((int)i["hp"] - (int)(i["damage"]??0))+"/"+i["hp"]+
-					"\n"+Icons.Sheet["ac"]+" Hardness "+i["hardness"],true)
-				.WithDescription("Price: " + (i["price"] ?? 0) + " " + i["priceunit"]+"\n"+
-					"Bulk: "+(i["bulk"]??0));
-			if((string)i["type"] == "armor" || (string)i["type"] == "shield")
-			{
-				embed.AddField("Armor bonus", "**Category**: "+(i["category"]??"Uncategorized")+
-					"\n**AC bonus**: " + (i["acbonus"] ?? 0)+
-					"\n**Maximum Dexterity Bonus**: "+(i["dexcap"]??"-")+
-					"\n**Armor Check Penalty**: "+(i["checkpenalty"]??0)+
-					"\n**Speed Penalty**: "+(i["speedpenalty"]??0)+"ft"+
-					"\n**Strength**: "+(i["strength"]??0));
-			}
-			if ((string)i["type"] == "weapon")
-			{
-				embed.AddField("Weapon Statistics", "**Group**: " + (i["group"] ?? "-") + "; " +
-					"**Category**: " + (i["category"] ?? "Uncategorizes") +
-					"\n**Damage**: 1" + (i["damagedie"] ?? "d6") + " " + (i["damagetype"] ?? "Untyped"));
-			}
+			var embed = SRD.EmbedSpell(s);
 
-			if (c.Color == null)
-			{
-				Random randonGen = new Random();
-				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
-				randonGen.Next(255));
-				embed.WithColor(randomColor);
-			}
-			else
-			{
-				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
-			}
-
-			string body = (string)i["body"] ?? "No Description";
-
-			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
-				.Replace("(aaa)", Icons.Actions["3"])
-				.Replace("(f)", Icons.Actions["f"])
-				.Replace("(r)", Icons.Actions["r"]);
-
-			embed.AddField("Description", body);
 			return embed.Build();
 		}
-
 		public async Task<Embed> GetAllSpells(Character c)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId);
@@ -727,7 +697,7 @@ namespace NethysBot.Services
 			if (!json["data"].HasValues) return null;
 
 			var classes = from cls in json["data"]["classes"]
-						  where cl["tradition"] != null
+						  where cls["tradition"] != null
 						  select cls;
 
 			if (classes.Count() == 0) return null;
@@ -740,30 +710,118 @@ namespace NethysBot.Services
 
 			var sb = new StringBuilder();
 
-			var cl = classes.FirstOrDefault();
-			string ability = ((string)cl["ability"]).NullorEmpty() ? "" : Icons.Scores[(string)cl["ability"]] + " ";
+			foreach (var cl in classes)
+			{
+				string ability = ((string)cl["ability"]).NullorEmpty() ? "" : Icons.Scores[(string)cl["ability"]] + " ";
 
-			sb.AppendLine(ability + (cl["name"] ?? "Unnamed Class") + " " + Icons.Proficiency[(string)cl["proficiency"]]);
-			sb.AppendLine("Spell Attack `" + ((int)json["values"][((string)cl["name"]).ToLower()]["bonus"]).ToModifierString() + "`");
-			sb.AppendLine("DC `" + ((int)json["values"][((string)cl["name"]).ToLower()]["value"]) + "`");
+				sb.AppendLine(ability + ((string)cl["tradition"]).Uppercase()+ " " + Icons.Proficiency[(string)cl["proficiency"]]);
+				sb.AppendLine("Spell Attack `" + ((int)json["values"][((string)cl["name"]).ToLower()]["bonus"]).ToModifierString() + "`");
+				sb.AppendLine("DC `" + ((int)json["values"][((string)cl["name"]).ToLower()]["value"]) + "`");
 
-			if (!((string)json["data"]["focusmax"]).NullorEmpty()) sb.AppendLine("Focus Points: " + (json["data"]["focus"] ?? 0) + "/" + json["data"]["focusmax"]);
+				embed.AddField(((string)cl["name"]??"Unnamed class"), sb.ToString(),true);
+				sb.Clear();
+			}
 
-			embed.WithDescription(sb.ToString());
+			var focus = from sp in spells where (string)sp["type"] == "focus" select sp;
 
-			sb.Clear();
+			if (focus.Count() > 0)
+			{
+				foreach (var s in focus)
+				{
+					var act = (string)s["actions"];
+
+					if (act != null)
+					{
+						if (Icons.Actions.TryGetValue(act, out string icon))
+						{
+							act = icon;
+						}
+					}
+					sb.Append((s["name"] ?? "Unnamed Spell") + " " + act+", ");
+				}
+				string f = ((string)json["data"]["focusmax"]).NullorEmpty() ? "" : " [" + (json["data"]["focus"] ?? 0) + "/" + json["data"]["focusmax"]+"]";
+				embed.AddField("Focus"+f, sb.ToString().TrimEnd().Substring(0,sb.Length-2));
+				sb.Clear();
+			}
+
+			var rituals = from sp in spells where (string)sp["type"] == "ritual" select sp;
+
+			if (rituals.Count() > 0)
+			{
+				foreach (var s in focus)
+				{
+					var act = (string)s["actions"];
+
+					if (act != null)
+					{
+						if (Icons.Actions.TryGetValue(act, out string icon))
+						{
+							act = icon;
+						}
+					}
+					sb.Append((s["name"] ?? "Unnamed Spell") + " " + act + ", ");
+				}
+				string f = ((string)json["data"]["focusmax"]).NullorEmpty() ? "" : " [" + (json["data"]["focus"] ?? 0) + "/" + json["data"]["focusmax"] + "]";
+				embed.AddField("Rituals" + f, sb.ToString().TrimEnd().Substring(0, sb.Length - 2));
+				sb.Clear();
+			}
 
 			var lv0 = from sp in spells where sp["cantrip"] != null select sp;
 
 			if(lv0.Count() > 0)
 			{
-				foreach(var s in lv0)
+				int slots = (from cl in json["data"]["classes"]
+							 where cl["spell0"] != null
+							 select (int)cl["spell0"]).Sum();
+				foreach (var s in lv0)
 				{
-					var casts = s["casts"].Children();
-					sb.AppendLine((s["name"] ?? "Unnamed Cantrip") + " " +)
+					var casts = s["cast"]!=null? string.Join(", ",s["cast"]) : "-";
+					var act = (string)s["actions"];
+
+					if (act != null)
+					{
+						if (Icons.Actions.TryGetValue(act, out string icon))
+						{
+							act = icon;
+						}
+					}
+					sb.Append((s["name"] ?? "Unnamed Cantrip") + " " + act+", ");
 				}
+
+				embed.AddField("Cantrips ["+slots+"]", sb.ToString().TrimEnd().Substring(0, sb.Length-2));
+				sb.Clear();
 			}
 
+			for (int i = 1; i < 9; i++)
+			{
+				var sps = from sp in spells where sp["level"]!=null &&
+						  (string)sp["type"]=="spell" && 
+						  (int)sp["level"] == i 
+						  select sp;
+				if (sps.Count() == 0) continue;
+
+				int slots = (from cl in json["data"]["classes"]
+							 where cl["spell" + i] != null
+							 select (int)cl["spell" + i]).Sum();
+
+
+				foreach (var s in sps)
+				{
+					var casts = s["cast"] != null ? string.Join(", ", s["cast"]) : "-";
+					var act = (string)s["actions"];
+
+					if (act != null)
+					{
+						if (Icons.Actions.TryGetValue(act, out string icon))
+						{
+							act = icon;
+						}
+					}
+					sb.Append((s["name"] ?? "Unnamed Spell") + " " + act+", ");
+				}
+				embed.AddField(i.ToPlacement() + " Level ["+slots+"]", sb.ToString().TrimEnd().Substring(0, sb.Length-2));
+				sb.Clear();
+			}
 
 			if (c.Color == null)
 			{
@@ -779,5 +837,7 @@ namespace NethysBot.Services
 
 			return embed.Build();
 		}
+		#endregion
+
 	}
 }

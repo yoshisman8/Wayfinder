@@ -56,6 +56,7 @@ namespace NethysBot
 				// Add additional services here...
 				.AddSingleton<SheetService>()
 				.AddSingleton(new LiteDatabase(Path.Combine(Directory.GetCurrentDirectory(), "Database.db")))
+				.AddSingleton<SRD>()
 				.BuildServiceProvider();
 		}
 

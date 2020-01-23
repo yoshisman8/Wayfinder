@@ -55,5 +55,5 @@ namespace NethysBot.Models
 		public int[] Color { get; set; } = null;
 	}
 
-	public enum SheetType { character, companion }
+	public enum SheetType { Character, Companion }
 }

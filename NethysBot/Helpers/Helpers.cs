@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using NethysBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -78,6 +79,15 @@ namespace NethysBot.Helpers
 			{
 				return char.ToUpper(text[0]) + text.Substring(1);
 			}
+		}
+
+		public static string ToPlacement(this int number)
+		{
+			int n = Math.Abs(number);
+			if (n == 1) return number + "st";
+			else if (n == 2) return number + "nd";
+			else if (n == 3) return number + "rd";
+			else return number + "th";
 		}
 	}
 	public enum TextPadding { Before, After }
@@ -200,6 +210,11 @@ namespace NethysBot.Helpers
 			{"2", "<:2_actions:667465200672178207>" },
 			{"3", "<:3_actions:667465200814915616>" },
 			{"r", "<:reaction:667465201192271943>" }
+		};
+		public static Dictionary<SheetType, string> SheetType { get; set; } = new Dictionary<SheetType, string>()
+		{
+			{ Models.SheetType.Companion,"<:companion:669987675616313385>" },
+			{ Models.SheetType.Character, "<:character:669987675142357032>" }
 		};
 	}
 }

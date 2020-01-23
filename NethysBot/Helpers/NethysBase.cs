@@ -56,6 +56,10 @@ namespace NethysBot.Helpers
 
 			return user.Character;
 		}
+		/// <summary>
+		/// Gets the current user's active animal companion
+		/// </summary>
+		/// <returns>The animal companion, or null if no active animal companion is set.</returns>
 		public Character GetCompanion()
 		{
 			var user = GetUser();
@@ -65,7 +69,7 @@ namespace NethysBot.Helpers
 		/// Gets the current user's characters and companions.
 		/// </summary>
 		/// <returns></returns>
-		public List<Character> GetAllCharacter()
+		public List<Character> GetAllSheets()
 		{
 			var user = GetUser();
 
@@ -102,6 +106,12 @@ namespace NethysBot.Helpers
 			var Users = Database.GetCollection<User>("Users");
 
 			Users.Update(user);
+		}
+		public void UpdateCharacter(Character C)
+		{
+			var chars = Database.GetCollection<Character>("Characters");
+
+			chars.Update(C);
 		}
 	}
 }
