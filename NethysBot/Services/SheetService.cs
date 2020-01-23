@@ -210,7 +210,7 @@ namespace NethysBot.Services
 				.WithThumbnailUrl(c.ImageUrl);
 			var sb = new StringBuilder();
 			sb.AppendLine("Lv" + (string)full["level"] + (((string)full["ancestry"]).NullorEmpty()? "" : " " + (string)full["ancestry"]) + (full["classes"].HasValues ? " "+(string)full["classes"][0]["name"]:" Adventurer"));
-			sb.AppendLine(Icons.Sheet["hp"] + " HP `" + ((int)values["hp"]["value"] - (int)full["damage"])+ "/" + values["hp"]["value"]+"`");
+			sb.AppendLine(Icons.Sheet["hp"] + " HP `" + ((int)values["hp"]["value"] - (int)(full["damage"]??0))+ "/" + values["hp"]["value"]+"`");
 			sb.AppendLine(Icons.Sheet["ac"] + " AC `" + values["armor class"]["value"]+"`");
 			sb.AppendLine(Icons.Sheet["per"] + " Perception `" + ((int)values["perception"]["bonus"]).ToModifierString() + "` (DC " + values["perception"]["value"] + ")");
 
@@ -400,7 +400,7 @@ namespace NethysBot.Services
 			return embed.Build();
 		}
 
-		public async Task<Embed> GetAbility(Character c, string name)
+		public async Task<Embed> GetFeature(Character c, string name)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId + "/features");
 
@@ -632,7 +632,7 @@ namespace NethysBot.Services
 				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
 			}
 
-			if (json["data"]["items"].HasValues)
+			if (json["data"]["items"]!=null && json["data"]["items"].HasValues)
 			{
 				var items = json["data"]["items"].Children();
 				var sb = new StringBuilder();
@@ -711,6 +711,72 @@ namespace NethysBot.Services
 				.Replace("(r)", Icons.Actions["r"]);
 
 			embed.AddField("Description", body);
+			return embed.Build();
+		}
+
+		public async Task<Embed> GetAllSpells(Character c)
+		{
+			var request = await Client.GetAsync(Api + c.RemoteId);
+
+			request.EnsureSuccessStatusCode();
+
+			string responsebody = await request.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if (!json["data"].HasValues) return null;
+
+			var classes = from cls in json["data"]["classes"]
+						  where cl["tradition"] != null
+						  select cls;
+
+			if (classes.Count() == 0) return null;
+
+			var spells = json["data"]["spells"].Children();
+
+			var embed = new EmbedBuilder()
+				.WithTitle(c.Name + "'s Spells")
+				.WithThumbnailUrl(c.ImageUrl);
+
+			var sb = new StringBuilder();
+
+			var cl = classes.FirstOrDefault();
+			string ability = ((string)cl["ability"]).NullorEmpty() ? "" : Icons.Scores[(string)cl["ability"]] + " ";
+
+			sb.AppendLine(ability + (cl["name"] ?? "Unnamed Class") + " " + Icons.Proficiency[(string)cl["proficiency"]]);
+			sb.AppendLine("Spell Attack `" + ((int)json["values"][((string)cl["name"]).ToLower()]["bonus"]).ToModifierString() + "`");
+			sb.AppendLine("DC `" + ((int)json["values"][((string)cl["name"]).ToLower()]["value"]) + "`");
+
+			if (!((string)json["data"]["focusmax"]).NullorEmpty()) sb.AppendLine("Focus Points: " + (json["data"]["focus"] ?? 0) + "/" + json["data"]["focusmax"]);
+
+			embed.WithDescription(sb.ToString());
+
+			sb.Clear();
+
+			var lv0 = from sp in spells where sp["cantrip"] != null select sp;
+
+			if(lv0.Count() > 0)
+			{
+				foreach(var s in lv0)
+				{
+					var casts = s["casts"].Children();
+					sb.AppendLine((s["name"] ?? "Unnamed Cantrip") + " " +)
+				}
+			}
+
+
+			if (c.Color == null)
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			else
+			{
+				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
+			}
+
 			return embed.Build();
 		}
 	}

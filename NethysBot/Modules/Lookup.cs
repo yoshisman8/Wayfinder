@@ -78,6 +78,39 @@ namespace NethysBot.Modules
 			return;
 		}
 
+		[Command("Action"),Alias("Actions","Act","Acts","Activities")]
+		public async Task GetAction([Remainder] string Name)
+		{
+			var c = GetCharacter();
+
+			if (c == null)
+			{
+				await ReplyAsync("You have no active character.");
+				return;
+			}
+
+			if (Name.NullorEmpty())
+			{
+				var fs = await SheetService.GetAllActions(c);
+				if (fs == null)
+				{
+					await ReplyAsync(c.Name + " has no Activities.");
+					return;
+				}
+				await ReplyAsync("", fs);
+				return;
+			}
+
+			var f = await SheetService.GetAction(c, Name);
+			if (f == null)
+			{
+				await ReplyAsync(c.Name + " has no activity that start with that name.");
+				return;
+			}
+			await ReplyAsync("", f);
+			return;
+		}
+
 		[Command("Inventory"), Alias("I","Item","Items")]
 		public async Task Inventory([Remainder] string Name = null)
 		{
