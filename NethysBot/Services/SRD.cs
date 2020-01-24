@@ -63,7 +63,7 @@ namespace NethysBot.Services
 
 			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
 				.Replace("(aaa)", Icons.Actions["3"])
-				.Replace("(f)", Icons.Actions["f"])
+				.Replace("(f)", Icons.Actions["0"])
 				.Replace("(r)", Icons.Actions["r"]);
 
 			var embed = new EmbedBuilder()
@@ -71,6 +71,10 @@ namespace NethysBot.Services
 				.AddField("Traits", feat["traits"] ?? "N/A", true)
 				.AddField("Type", ((string)feat["subtype"] ?? "Feat").Uppercase() + " " + feat["level"], true)
 				.AddField("Description", body);
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
 			return embed;
 		}
 		public EmbedBuilder EmbedFeature(JToken f)
@@ -79,7 +83,7 @@ namespace NethysBot.Services
 
 			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
 				.Replace("(aaa)", Icons.Actions["3"])
-				.Replace("(f)", Icons.Actions["f"])
+				.Replace("(f)", Icons.Actions["0"])
 				.Replace("(r)", Icons.Actions["r"]);
 
 			var embed = new EmbedBuilder()
@@ -92,6 +96,10 @@ namespace NethysBot.Services
 				embed.WithFooter((string)f["src"]);
 				embed.WithUrl((string)f["src"]);
 			}
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
 			return embed;
 		}
 		public EmbedBuilder EmbedAction(JToken f)
@@ -100,7 +108,7 @@ namespace NethysBot.Services
 
 			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
 				.Replace("(aaa)", Icons.Actions["3"])
-				.Replace("(f)", Icons.Actions["f"])
+				.Replace("(f)", Icons.Actions["0"])
 				.Replace("(r)", Icons.Actions["r"]);
 
 			var embed = new EmbedBuilder()
@@ -126,6 +134,10 @@ namespace NethysBot.Services
 				embed.WithFooter((string)f["src"]);
 				embed.WithUrl((string)f["src"]);
 			}
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
 			return embed;
 		}
 		public EmbedBuilder EmbedItem(JToken i)
@@ -135,7 +147,7 @@ namespace NethysBot.Services
 				.AddField("Traits", i["traits"] ?? "No Traits", true)
 				.AddField("Type", (i["type"] ?? "Item") + " " + (i["level"] ?? 0), true)
 				.AddField("Status", Icons.Sheet["hp"] + " HP " + ((int)i["hp"] - (int)(i["damage"] ?? 0)) + "/" + i["hp"] +
-					"\n" + Icons.Sheet["ac"] + " Hardness " + i["hardness"], true)
+					"\n" + Icons.Sheet["ac"] + " Hardness " + (i["hardness"]??0), true)
 				.WithDescription("Price: " + (i["price"] ?? 0) + " " + i["priceunit"] + "\n" +
 					"Bulk: " + (i["bulk"] ?? 0));
 			if ((string)i["type"] == "armor" || (string)i["type"] == "shield")
@@ -160,7 +172,7 @@ namespace NethysBot.Services
 
 			body = body.Replace("(a)", Icons.Actions["1"]).Replace("(aa)", Icons.Actions["2"])
 				.Replace("(aaa)", Icons.Actions["3"])
-				.Replace("(f)", Icons.Actions["f"])
+				.Replace("(f)", Icons.Actions["0"])
 				.Replace("(r)", Icons.Actions["r"]);
 
 			embed.AddField("Description", body);
@@ -170,6 +182,10 @@ namespace NethysBot.Services
 				embed.WithFooter((string)i["src"]);
 				embed.WithUrl((string)i["src"]);
 			}
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
 			return embed;
 		}
 		public EmbedBuilder EmbedSpell(JToken s)
@@ -190,7 +206,7 @@ namespace NethysBot.Services
 
 			string type = s["cantrip"] != null ? "Cantrip" : ((string)s["type"]).Uppercase() + " " + (s["level"] ?? 0);
 
-			string comps = s["cast"] != null ? string.Join(", ", s["cast"]) : "";
+			string comps = s["cast"] != null ? string.Join(", ", s["cast"]).ToUpper() : "";
 
 			string traditions = s["traditions"] != null ? string.Join(", ", s["traditions"]).Uppercase() : "-";
 
@@ -198,12 +214,12 @@ namespace NethysBot.Services
 				.WithTitle(((string)s["name"] ?? "Unammed Spell") + " (" + type + ")")
 				.AddField("Traits", s["traits"] ?? "No Traits", true)
 				.AddField("Cast", act + " " + comps, true)
-				.AddField("Traditions", comps, true);
+				.AddField("Traditions", traditions, true);
 
 			var sb = new StringBuilder();
-			if (s["range"] != null) sb.AppendLine("**Range**" + s["range"]);
-			if (s["area"] != null) sb.AppendLine("**Area** " + s["area"]);
-			if (s["targets"] != null) sb.AppendLine("**Targets**" + s["targets"]);
+			if (s["range"] != null) sb.AppendLine("**Range** " + s["range"]);
+			// if (s["area"] != null) sb.AppendLine("**Area** " + s["area"]);
+			// if (s["targets"] != null) sb.AppendLine("**Targets** " + s["targets"]);
 			if (s["savingthrow"] != null) sb.AppendLine("**Saving Throw**" + ((string)s["savingthrow"]).Uppercase() + (s["basic"] != null ? " (Basic)" : ""));
 
 
@@ -215,6 +231,10 @@ namespace NethysBot.Services
 				embed.WithFooter((string)s["src"]);
 				embed.WithUrl((string)s["src"]);
 			}
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
 			return embed;
 		}
 	}

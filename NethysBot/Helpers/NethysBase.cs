@@ -53,7 +53,9 @@ namespace NethysBot.Helpers
 		public Character GetCharacter()
 		{
 			var user = GetUser();
-			return user.Character;
+			var col = Database.GetCollection<Character>("Characters");
+			var c = col.FindOne(x => x.RemoteId == user.Character);
+			return c;
 		}
 		/// <summary>
 		/// Gets the current user's active animal companion
@@ -62,7 +64,9 @@ namespace NethysBot.Helpers
 		public Character GetCompanion()
 		{
 			var user = GetUser();
-			return user.Companion;
+			var col = Database.GetCollection<Character>("Characters");
+			var c = col.FindOne(x=> x.RemoteId == user.Companion);
+			return c;
 		}
 		/// <summary>
 		/// Gets the current user's characters and companions.
@@ -70,11 +74,10 @@ namespace NethysBot.Helpers
 		/// <returns></returns>
 		public List<Character> GetAllSheets()
 		{
-			var user = GetUser();
 
 			var Characters = Database.GetCollection<Character>("Characters");
 
-			var chars = Characters.Find(x => x.Owners.Contains(user.Id));
+			var chars = Characters.Find(x => x.Owners.Select(z=>z.Id).Any(y => y == Context.User.Id));
 
 			return chars.ToList();
 		}
@@ -86,17 +89,16 @@ namespace NethysBot.Helpers
 		public User GetUser()
 		{
 			var Users = Database.GetCollection<User>("Users");
-			var col = Database.GetCollection<Character>("Characters");
 
-			if (!Users.Exists(x => x.Id == Context.User.Id))
+			if (!Users.Exists(x => x.Id == Context.User.Id.ToString()))
 			{
 				Users.Insert(new User()
 				{
-					Id = Context.User.Id
+					Id = Context.User.Id.ToString()
 				});
 			}
 
-			var user = Users.Include(x=> x.Character).Include(x=>x.Companion).FindOne(x => x.Id == Context.User.Id);
+			var user = Users.FindOne(x=>x.Id == Context.User.Id.ToString());
 
 			return user;
 		}

@@ -8,16 +8,14 @@ namespace NethysBot.Models
 	public class User
 	{
 		[BsonId]
-		public ulong Id { get; set; }
+		public string Id { get; set; }
 		/// <summary>
-		/// The user's current active character
+		/// ID of the user's current active character
 		/// </summary>
-		[BsonRef("Characters")]
-		public Character Character { get; set; }
+		public string Character { get; set; }
 		/// <summary>
-		/// The user's current active companion
+		/// ID of the user's current active companion
 		/// </summary>
-		[BsonRef("Characters")]
-		public Character Companion { get; set; }
+		public string Companion { get; set; }
 	}
 }

@@ -19,11 +19,11 @@ namespace NethysBot.Helpers
 
 			var col = db.GetCollection<User>("Users");
 
-			if(!col.Exists(x=>x.Id == context.User.Id))
+			if(!col.Exists(x=>x.Id == context.User.Id.ToString()))
 			{
 				col.Insert(new User()
 				{
-					Id = context.User.Id
+					Id = context.User.Id.ToString()
 				});
 			}
 			return Task.FromResult(PreconditionResult.FromSuccess());

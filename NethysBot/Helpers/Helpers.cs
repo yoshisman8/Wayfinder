@@ -37,6 +37,11 @@ namespace NethysBot.Helpers
 		{
 			return (int)Math.Floor((decimal)((score - 10) / 2));
 		}
+		public static int Modifier(this int score)
+		{
+			int modifier = (int)Math.Floor((decimal)((score - 10) / 2));
+			return modifier;
+		}
 		public static string PrintModifier(this  int score)
 		{
 			int modifier = (int)Math.Floor((decimal)((score - 10) / 2));
@@ -210,7 +215,7 @@ namespace NethysBot.Helpers
 		};
 		public static Dictionary<string, string> Actions { get; set; } = new Dictionary<string, string>()
 		{
-			{"f", "<:free_action:667465200697475083>" },
+			{"0", "<:free_action:667465200697475083>" },
 			{"1", "<:1_action:667465200974299146>" },
 			{"2", "<:2_actions:667465200672178207>" },
 			{"3", "<:3_actions:667465200814915616>" },
