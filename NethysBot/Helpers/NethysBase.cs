@@ -53,7 +53,6 @@ namespace NethysBot.Helpers
 		public Character GetCharacter()
 		{
 			var user = GetUser();
-
 			return user.Character;
 		}
 		/// <summary>
@@ -87,8 +86,9 @@ namespace NethysBot.Helpers
 		public User GetUser()
 		{
 			var Users = Database.GetCollection<User>("Users");
+			var col = Database.GetCollection<Character>("Characters");
 
-			if(!Users.Exists(x => x.Id == Context.User.Id))
+			if (!Users.Exists(x => x.Id == Context.User.Id))
 			{
 				Users.Insert(new User()
 				{
@@ -96,7 +96,7 @@ namespace NethysBot.Helpers
 				});
 			}
 
-			var user = Users.Include(x => x.Character).Include(x => x.Companion).FindOne(x => x.Id == Context.User.Id);
+			var user = Users.Include(x=> x.Character).Include(x=>x.Companion).FindOne(x => x.Id == Context.User.Id);
 
 			return user;
 		}

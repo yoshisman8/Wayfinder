@@ -26,9 +26,10 @@ namespace NethysBot.Services
 			}
 			string raw = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(),"data", "all.json"));
 
-			var json = JObject.Parse(raw);
+			var tokens = JArray.Parse(raw);
 
-			var tokens = json[0];
+			//var tokens = json[0];
+			
 			Feats = from f in tokens where (string)f["type"] == "feat" select f;
 			Actions = from a in tokens where (string)a["type"] == "action" select a;
 			Items = from I in tokens

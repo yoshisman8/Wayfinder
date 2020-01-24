@@ -87,7 +87,7 @@ namespace NethysBot.Services
 
 			character.LastUpdated = DateTime.Now;
 
-			character.Type = Enum.Parse<SheetType>((string)json["data"]["type"]);
+			character.Type = Enum.Parse<SheetType>(((string)json["data"]["type"]).Uppercase());
 
 			if (context != null) 
 			{
@@ -200,7 +200,7 @@ namespace NethysBot.Services
 		{
 			string url = "https://character.pf2.tools/?" + c.RemoteId;
 
-			c = await SyncCharacter(c);
+			// c = await SyncCharacter(c);
 
 			var full = JObject.Parse(c.SheetCache);
 			var values = JObject.Parse(c.ValuesCache);
@@ -611,7 +611,7 @@ namespace NethysBot.Services
 		}	
 		public async Task<Embed> Inventory(Character c)
 		{
-			var request = await Client.GetAsync(Api + c.RemoteId);
+			var request = await Client.GetAsync(Api + c.RemoteId+"/items");
 
 			request.EnsureSuccessStatusCode();
 
@@ -621,10 +621,12 @@ namespace NethysBot.Services
 
 			if (!json["data"].HasValues) return null;
 
-			var pp = json["data"]["pp"] ?? 0;
-			var gp = json["data"]["gp"] ?? 0;
-			var sp = json["data"]["sp"] ?? 0;
-			var cp = json["data"]["cp"] ?? 0;
+			var full = JObject.Parse(c.SheetCache);
+
+			var pp = full["pp"] ?? 0;
+			var gp = full["gp"] ?? 0;
+			var sp = full["sp"] ?? 0;
+			var cp = full["cp"] ?? 0;
 
 			var embed = new EmbedBuilder()
 				.WithTitle(c.Name + "'s Inventory")
@@ -643,7 +645,7 @@ namespace NethysBot.Services
 				embed.WithColor(c.Color[0], c.Color[1], c.Color[2]);
 			}
 
-			if (json["data"]["items"]!=null && json["data"]["items"].HasValues)
+			if (json["data"]!=null && json["data"].HasValues)
 			{
 				var items = json["data"]["items"].Children();
 				var sb = new StringBuilder();
@@ -686,23 +688,23 @@ namespace NethysBot.Services
 		}
 		public async Task<Embed> GetAllSpells(Character c)
 		{
-			var request = await Client.GetAsync(Api + c.RemoteId);
+			var request = await Client.GetAsync(Api + c.RemoteId + "/spells");
 
 			request.EnsureSuccessStatusCode();
 
 			string responsebody = await request.Content.ReadAsStringAsync();
 
-			var json = JObject.Parse(responsebody);
+			var jsonspells = JObject.Parse(responsebody);
+			var json = JObject.Parse(c.SheetCache);
+			var values = JObject.Parse(c.ValuesCache);
 
-			if (!json["data"].HasValues) return null;
-
-			var classes = from cls in json["data"]["classes"]
+			var classes = from cls in json["classes"]
 						  where cls["tradition"] != null
 						  select cls;
 
 			if (classes.Count() == 0) return null;
 
-			var spells = json["data"]["spells"].Children();
+			var spells = jsonspells["data"].Children();
 
 			var embed = new EmbedBuilder()
 				.WithTitle(c.Name + "'s Spells")
@@ -715,8 +717,8 @@ namespace NethysBot.Services
 				string ability = ((string)cl["ability"]).NullorEmpty() ? "" : Icons.Scores[(string)cl["ability"]] + " ";
 
 				sb.AppendLine(ability + ((string)cl["tradition"]).Uppercase()+ " " + Icons.Proficiency[(string)cl["proficiency"]]);
-				sb.AppendLine("Spell Attack `" + ((int)json["values"][((string)cl["name"]).ToLower()]["bonus"]).ToModifierString() + "`");
-				sb.AppendLine("DC `" + ((int)json["values"][((string)cl["name"]).ToLower()]["value"]) + "`");
+				sb.AppendLine("Spell Attack `" + ((int)values[((string)cl["name"]).ToLower()]["bonus"]).ToModifierString() + "`");
+				sb.AppendLine("DC `" + ((int)values[((string)cl["name"]).ToLower()]["value"]) + "`");
 
 				embed.AddField(((string)cl["name"]??"Unnamed class"), sb.ToString(),true);
 				sb.Clear();
@@ -739,7 +741,7 @@ namespace NethysBot.Services
 					}
 					sb.Append((s["name"] ?? "Unnamed Spell") + " " + act+", ");
 				}
-				string f = ((string)json["data"]["focusmax"]).NullorEmpty() ? "" : " [" + (json["data"]["focus"] ?? 0) + "/" + json["data"]["focusmax"]+"]";
+				string f = ((string)json["focusmax"]).NullorEmpty() ? "" : " [" + (json["focus"] ?? 0) + "/" + json["focusmax"]+"]";
 				embed.AddField("Focus"+f, sb.ToString().TrimEnd().Substring(0,sb.Length-2));
 				sb.Clear();
 			}
@@ -761,7 +763,7 @@ namespace NethysBot.Services
 					}
 					sb.Append((s["name"] ?? "Unnamed Spell") + " " + act + ", ");
 				}
-				string f = ((string)json["data"]["focusmax"]).NullorEmpty() ? "" : " [" + (json["data"]["focus"] ?? 0) + "/" + json["data"]["focusmax"] + "]";
+				string f = ((string)json["focusmax"]).NullorEmpty() ? "" : " [" + (json["focus"] ?? 0) + "/" + json["focusmax"] + "]";
 				embed.AddField("Rituals" + f, sb.ToString().TrimEnd().Substring(0, sb.Length - 2));
 				sb.Clear();
 			}
@@ -770,7 +772,7 @@ namespace NethysBot.Services
 
 			if(lv0.Count() > 0)
 			{
-				int slots = (from cl in json["data"]["classes"]
+				int slots = (from cl in json["classes"]
 							 where cl["spell0"] != null
 							 select (int)cl["spell0"]).Sum();
 				foreach (var s in lv0)
@@ -800,7 +802,7 @@ namespace NethysBot.Services
 						  select sp;
 				if (sps.Count() == 0) continue;
 
-				int slots = (from cl in json["data"]["classes"]
+				int slots = (from cl in json["classes"]
 							 where cl["spell" + i] != null
 							 select (int)cl["spell" + i]).Sum();
 

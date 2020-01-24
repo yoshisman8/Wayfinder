@@ -89,6 +89,11 @@ namespace NethysBot.Helpers
 			else if (n == 3) return number + "rd";
 			else return number + "th";
 		}
+
+		public static bool StartsWithVowel(this string text)
+		{
+			return "aeiou".IndexOf(text[0].ToString(), StringComparison.InvariantCultureIgnoreCase) >= 0;
+		}
 	}
 	public enum TextPadding { Before, After }
 	public static class Icons

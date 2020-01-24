@@ -69,7 +69,27 @@ namespace NethysBot.Modules
 			var embed = await SheetService.GetSheet(c);
 
 			await msg.ModifyAsync(x => x.Embed = embed);
-			await msg.ModifyAsync(x=> x.Content = "");
+			await msg.ModifyAsync(x=> x.Content = " ");
+		}
+
+		[Command("Companion"), Alias("Comp")]
+		[Summary("Display your companion's character sheet.")]
+		public async Task Companion([Remainder] string Name = null)
+		{
+			var c = GetCompanion();
+
+			if (c == null)
+			{
+				await ReplyAsync("You have no active companion.");
+				return;
+			}
+
+			var msg = await ReplyAsync("Loading sheet...");
+
+			var embed = await SheetService.GetSheet(c);
+
+			await msg.ModifyAsync(x => x.Embed = embed);
+			await msg.ModifyAsync(x => x.Content = " ");
 		}
 
 		[Command("Active")]
@@ -179,25 +199,7 @@ namespace NethysBot.Modules
 
 		}
 
-		[Command("Companion"), Alias("Comp")]
-		[Summary("Display your companion's character sheet.")]
-		public async Task Companion([Remainder] string Name = null)
-		{
-			var c = GetCompanion();
-
-			if (c == null)
-			{
-				await ReplyAsync("You have no active companion.");
-				return;
-			}
-
-			var msg = await ReplyAsync("Loading sheet...");
-
-			var embed = await SheetService.GetSheet(c);
-
-			await msg.ModifyAsync(x => x.Embed = embed);
-			await msg.ModifyAsync(x => x.Content = "");
-		}
+		
 		[Command("Delete")]
 		[Summary("Deletes a character sheet.")]
 		public async Task delete([Remainder] string Name)

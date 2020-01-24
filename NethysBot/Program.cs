@@ -22,6 +22,8 @@ namespace NethysBot
 
 		public async Task MainAsync()
 		{
+			Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "data"));
+			
 			_client = new DiscordSocketClient();
 			_config = BuildConfig();
 
@@ -55,7 +57,7 @@ namespace NethysBot
 				.AddSingleton(new InteractiveService(_client))
 				// Add additional services here...
 				.AddSingleton<SheetService>()
-				.AddSingleton(new LiteDatabase(Path.Combine(Directory.GetCurrentDirectory(), "Database.db")))
+				.AddSingleton(new LiteDatabase(Path.Combine(Directory.GetCurrentDirectory(),"data", "Database.db")))
 				.AddSingleton<SRD>()
 				.BuildServiceProvider();
 		}
