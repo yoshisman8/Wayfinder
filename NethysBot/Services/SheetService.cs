@@ -82,19 +82,18 @@ namespace NethysBot.Services
 
 			if (context != null) 
 			{
-				if (!character.Owners.Any(x=>x.Id == context.User.Id)) character.Owners.Add(new UserSettings() { Id = context.User.Id});
+				if (!character.Owners.ContainsKey(context.User.Id)) character.Owners.Add(context.User.Id, new UserSettings() { Id = context.User.Id });
 			}
 
 			character.Type = Enum.Parse<SheetType>(((string)json["data"]["type"]).Uppercase());
 
 			character.Name = (string)json["data"]["name"] ?? "Unnamed Character";
 
-			if (json["data"]["customenotes"] != null && json["data"]["customnotes"].HasValues)
+			var notes = json["data"]["customnotes"];
+
+			if (notes!=null	&& notes.HasValues)
 			{
-				var notes = from n in json["data"]["customnotes"]
-							where (string)n["uiid"] == "character"
-							select n;
-				foreach (var n in notes)
+				foreach (var n in notes.Where(x=> (string)x["uiid"] == "character"))
 				{
 					if (((string)n["body"]).IsImageUrl())
 					{
@@ -102,13 +101,21 @@ namespace NethysBot.Services
 						break;
 					}
 				}
+				foreach (var n in notes.Where(x => (string)x["uiid"] == "companions"))
+				{
+					if (((string)n["body"]).IsImageUrl())
+					{
+						character.FamImg = (string)n["body"];
+						break;
+					}
+				}
 			}
 
 			collection.Update(character);
-			collection.EnsureIndex(x => x.Name.ToUpper());
+			collection.EnsureIndex("character", "LOWER($.Name)");
 			collection.EnsureIndex(x => x.RemoteId);
 			collection.EnsureIndex(x => x.Type);
-			collection.EnsureIndex("character","$.Owner[*].Id");
+			collection.EnsureIndex("character","$.Owner[*]");
 
 			return collection.FindOne(x => x.RemoteId == id);
 		}
@@ -134,12 +141,11 @@ namespace NethysBot.Services
 
 			character.Name = (string)json["data"]["name"]??"Unnamed Character";
 
-			if (json["data"]["customenotes"]!=null && json["data"]["customnotes"].HasValues)
+			var notes = json["data"]["customnotes"];
+
+			if (notes != null && notes.HasValues)
 			{
-				var notes = from n in json["data"]["customnotes"]
-							where (string)n["uiid"] == "character"
-							select n;
-				foreach (var n in notes)
+				foreach (var n in notes.Where(x => (string)x["uiid"] == "character"))
 				{
 					if (((string)n["body"]).IsImageUrl())
 					{
@@ -147,13 +153,27 @@ namespace NethysBot.Services
 						break;
 					}
 				}
+				foreach (var n in notes.Where(x => (string)x["uiid"] == "companions"))
+				{
+					if (((string)n["body"]).IsImageUrl())
+					{
+						character.FamImg = (string)n["body"];
+						break;
+					}
+				}
+			}
+
+			if(json["values"] != null && json["values"].HasValues)
+			{
+				character.Values = json["values"].ToString();
+				character.ValuesLastUpdated = DateTime.Now;
 			}
 
 			collection.Update(character);
 
 			return character;
 		}
-		public async Task<JToken> GetFullSheet(Character c)
+		public async Task<JObject> GetFullSheet(Character c)
 		{
 			HttpResponseMessage response = await Client.GetAsync(Api + c.RemoteId);
 
@@ -163,9 +183,9 @@ namespace NethysBot.Services
 
 			var json = JObject.Parse(responsebody);
 
-			return json["data"];
+			return (JObject)json["data"];
 		}
-		public async Task<JToken> GetValues(Character c)
+		public async Task<JObject> GetValues(Character c)
 		{
 			HttpResponseMessage response = await Client.GetAsync(Api + c.RemoteId + "/values");
 
@@ -175,7 +195,35 @@ namespace NethysBot.Services
 
 			var json = JObject.Parse(responsebody);
 
-			return json["data"];
+			if ((json["data"] == null || !json["data"].HasValues) && c.Values.NullorEmpty()) return null;
+			else if((json["data"] == null || !json["data"].HasValues) && !c.Values.NullorEmpty())
+			{
+				return JObject.Parse(c.Values);
+			}
+			else
+			{
+				c.Values = json["data"].ToString();
+				c.ValuesLastUpdated = DateTime.Now;
+
+				collection.Update(c);
+
+				return (JObject)json["data"];
+			}
+		}
+		public async Task<JObject> Get(Character c, string endpoint)
+		{
+			HttpResponseMessage response = await Client.GetAsync(Api + c.RemoteId + "/"+endpoint);
+
+			response.EnsureSuccessStatusCode();
+
+			string responsebody = await response.Content.ReadAsStringAsync();
+
+			var json = JObject.Parse(responsebody);
+
+			if ((json["data"] == null || !json["data"].HasValues)) return null;
+
+			else return (JObject)json["data"];
+
 		}
 		
 		/// <summary>
@@ -191,15 +239,23 @@ namespace NethysBot.Services
 			
 			var full = await GetFullSheet(c);
 
-			if (full["values"] == null || !full["values"].HasValues)
+			if (full == null || !full.HasValues)
 			{
 				return new EmbedBuilder()
-					.WithTitle("Open "+c.Name+" in pf2.tools")
-					.WithUrl(url)
-					.WithDescription("Seems like we cannot fetch all the data for this character. \nTo fix this, click on the link above to open the character sheet online and make any small change to the sheet such as toggling a condition on and off.\nMake sure you log into your account, making changes while in read-only mode will not work!")
+					.WithTitle("Error, Character not found.")
+					.WithDescription("Seems like we can't fetch this character's data in pf2.tools. This could mean that the site is down or the character has been deleted.")
 					.Build();
 			}
-			var values = full["values"];
+			var values = await GetValues(c);
+
+			if(values == null || !values.HasValues)
+			{
+				return new EmbedBuilder()
+					.WithTitle("Click here")
+					.WithUrl(url)
+					.WithDescription("Seems like we cannot fetch "+c.Name+"'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.")
+					.Build();
+			}
 
 			var embed = new EmbedBuilder()
 				.WithTitle(c.Name)
@@ -222,7 +278,7 @@ namespace NethysBot.Services
 				foreach (var cl in classes)
 				{
 					string ability = ((string)cl["ability"]).NullorEmpty() ? "" : Icons.Scores[(string)cl["ability"]] + " ";
-					sb.AppendLine(ability + (string)cl["name"] + " " + Icons.Proficiency[(string)cl["proficiency"]] + (c.Type == SheetType.Character?" (Class DC: " + ((int)(values?[((string)cl["name"]).ToLower()]["bonus"]??0) + 10) + ")":""));
+					sb.AppendLine(ability + ((string)cl["name"]).Uppercase() + " " + Icons.Proficiency[(string)cl["proficiency"]] + (c.Type == SheetType.Character?" (Class DC: " + ((int)(values?[((string)cl["name"]).ToLower()]["bonus"]??0) + 10) + ")":""));
 				}
 				embed.AddField("Classes", sb.ToString());
 				sb.Clear();
@@ -312,20 +368,21 @@ namespace NethysBot.Services
 			randonGen.Next(255));
 			embed.WithColor(randomColor);
 
-			if (context != null && c.Owners.Any(x=>x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
-			embed.WithFooter("Last synced: " + c.LastUpdated.ToString());
+			embed.WithFooter(c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Data might not be accurate" : "Last updated: " +c.LastUpdated.ToString());
 
 			return embed.Build();
 		}
+		
 
 		#region Feats
 		public async Task<Embed> GetFeat(Character c, string name, SocketCommandContext context = null)
@@ -359,14 +416,14 @@ namespace NethysBot.Services
 				embed.WithUrl((string)feat["src"]);
 			}
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
 			return embed.Build();
@@ -389,14 +446,14 @@ namespace NethysBot.Services
 				.WithTitle(c.Name + "'s Feats")
 				.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
 			var sb = new StringBuilder();
@@ -438,14 +495,14 @@ namespace NethysBot.Services
 
 			embed.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
 			return embed.Build();
@@ -468,14 +525,14 @@ namespace NethysBot.Services
 				.WithTitle(c.Name + "'s Features")
 				.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
 			var sb = new StringBuilder();
@@ -517,14 +574,14 @@ namespace NethysBot.Services
 
 			embed.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
 			return embed.Build();
@@ -547,14 +604,14 @@ namespace NethysBot.Services
 				.WithTitle(c.Name + "'s Actions")
 				.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
 			var sb = new StringBuilder();
@@ -602,14 +659,14 @@ namespace NethysBot.Services
 
 			var embed = SRD.EmbedItem(i);
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var id = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[id].Color != null)
+				var id = c.Owners[context.User.Id];
+				if (id.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[id].Color[0], c.Owners[id].Color[1], c.Owners[id].Color[2]));
+					embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
 				}
-				if (!c.Owners[id].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[id].ImageUrl);
+				if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
 			}
 
 			return embed.Build();
@@ -638,14 +695,14 @@ namespace NethysBot.Services
 				.AddField("Currency","CP "+cp+" | SP "+ sp+" | GP "+gp+" | PP "+pp)
 				.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
 			if (json["data"]!=null && json["data"].HasValues)
@@ -687,14 +744,14 @@ namespace NethysBot.Services
 
 			var embed = SRD.EmbedSpell(s);
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
 			return embed.Build();
@@ -718,8 +775,17 @@ namespace NethysBot.Services
 			var json = JObject.Parse(resclasses);
 			var values = JObject.Parse(resvalues)["data"];
 
+			if (values == null || !values.HasValues)
+			{
+				return new EmbedBuilder()
+					.WithTitle("Click here")
+					.WithUrl("https://character.pf2.tools/?" + c.RemoteId)
+					.WithDescription("Seems like we cannot fetch " + c.Name + "'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.")
+					.Build();
+			}
+
 			var classes = from cls in json["data"]
-						  where cls["tradition"] != null
+						  where !((string)cls["tradition"]).NullorEmpty()
 						  select cls;
 
 			if (classes.Count() == 0) return null;
@@ -845,19 +911,99 @@ namespace NethysBot.Services
 				sb.Clear();
 			}
 
-			if (context != null && c.Owners.Any(x => x.Id == context.User.Id))
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
 			{
-				var i = c.Owners.FindIndex(x => x.Id == context.User.Id);
-				if (c.Owners[i].Color != null)
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
 				{
-					embed.WithColor(new Color(c.Owners[i].Color[0], c.Owners[i].Color[1], c.Owners[i].Color[2]));
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
 				}
-				if (!c.Owners[i].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[i].ImageUrl);
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
 			}
 
 			return embed.Build();
 		}
 		#endregion
 
+		#region Familiar
+		public async Task<Embed> ShowFamiliar(Character c, SocketCommandContext context)
+		{
+			var req = await Client.GetAsync(Api + c.RemoteId + "/familiars");
+			req.EnsureSuccessStatusCode();
+			string resp = await req.Content.ReadAsStringAsync();
+
+			JObject json = (JObject)JObject.Parse(resp)["data"][0];
+
+			if (json == null || ((string)json["name"]).NullorEmpty()) return null;
+
+			var req2 = await Client.GetAsync(Api + c.RemoteId + "/values");
+			req2.EnsureSuccessStatusCode();
+			string resp2 = await req2.Content.ReadAsStringAsync();
+
+			JToken values = JObject.Parse(resp2)["data"];
+
+			if (values == null || !values.HasValues)
+			{
+				return new EmbedBuilder()
+					.WithTitle("Click here")
+					.WithUrl("https://character.pf2.tools/?" + c.RemoteId)
+					.WithDescription("Seems like we cannot fetch " + c.Name + "'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.")
+					.Build();
+			}
+
+			var embed = new EmbedBuilder()
+				.WithTitle((string)json["name"])
+				.WithThumbnailUrl(c.FamImg);
+			var sb = new StringBuilder();
+
+			sb.AppendLine(Icons.Sheet["hp"] + " HP `" + ((int)(values["famhp"]["bonus"] ?? 0) - (int)(json["damage"] ?? 0)) + "/" + (values["famhp"]["bonus"] ?? 0) + "`");
+			sb.AppendLine(Icons.Sheet["ac"] + " AC `" + (values["famac"]["value"] ?? "Unknown") + "`");
+			sb.AppendLine(Icons.Sheet["per"] + " Perception `" + ((int)(values["famperception"]["bonus"] ?? 0)).ToModifierString() + "`");
+			sb.AppendLine("Resistances: \n" + json["resist"]);
+
+			embed.AddField("Stats", sb.ToString(), true);
+			sb.Clear();
+
+			sb.AppendLine(Icons.Sheet["fort"] + " `" + ((int)(values?["famfort"]?["bonus"] ?? 0)).ToModifierString() + "`");
+			sb.AppendLine(Icons.Sheet["ref"] + " `" + ((int)(values?["famref"]?["bonus"] ?? 0)).ToModifierString() + "`");
+			sb.AppendLine(Icons.Sheet["will"] + " `" + ((int)(values?["famwill"]?["bonus"] ?? 0)).ToModifierString() + "`");
+			sb.AppendLine("Weakensses: \n" + json["weakness"]);
+
+			embed.AddField("Defenses", sb.ToString(), true);
+			sb.Clear();
+
+			sb.AppendLine("Acrobatics `" + ((int)values["famacrobatics"]["bonus"]).ToModifierString()+"`");
+			sb.AppendLine("Stealth `" + ((int)values["famstealth"]["bonus"]).ToModifierString() + "`");
+			sb.AppendLine("Stealth `" + ((int)values["famperception"]["bonus"]).ToModifierString() + "`");
+			sb.AppendLine("Other `" + ((int)values["famother"]["bonus"]).ToModifierString() + "`");
+
+			embed.AddField("Skill Bonuses", sb.ToString(),true);
+			sb.Clear();
+
+			foreach(var x in json["abilities"].Where(x=> (bool)x["active"]))
+			{
+				embed.AddField((string)x["name"] ?? "Unnamed Ability", ((string)x["body"]).NullorEmpty()? "No Description":x["body"]);
+			}
+
+			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			{
+				var i = c.Owners[context.User.Id];
+				if (i.Color != null)
+				{
+					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
+				}
+				else
+				{
+					Random randonGen = new Random();
+					Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+					randonGen.Next(255));
+					embed.WithColor(randomColor);
+				}
+				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+			}
+			
+			return embed.Build();
+		}
+		#endregion
 	}
 }

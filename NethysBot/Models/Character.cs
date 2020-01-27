@@ -9,20 +9,26 @@ namespace NethysBot.Models
 	public class Character
 	{
 		/// <summary> 
-		/// ids of whoever has imported the character.
+		/// Individual per-user settings
 		/// </summary>
-		public List<UserSettings> Owners { get; set; } = new List<UserSettings>();
-
+		public Dictionary<ulong,UserSettings> Owners { get; set; } = new Dictionary<ulong, UserSettings>();
 		/// <summary>
 		/// ID on characters.pf2.tools.
 		/// </summary>
 		[BsonId]
 		public string RemoteId { get; set; }
-
 		/// <summary>
 		/// Character Name for easy querying.
 		/// </summary>
 		public string Name { get; set; }
+		/// <summary>
+		/// Cache of the Values
+		/// </summary>
+		public string Values { get; set; }
+		/// <summary>
+		/// Date of the last time the sheet's values were updated
+		/// </summary>
+		public DateTime ValuesLastUpdated { get; set; }
 		/// <summary>
 		/// Date of the last time the sheet was updated.
 		/// </summary>
@@ -35,6 +41,11 @@ namespace NethysBot.Models
 		/// Url of the character's thumbnail image
 		/// </summary>
 		public string ImageUrl { get; set; }
+		/// <summary>
+		/// Url of the character's familiar
+		/// </summary>
+		public string FamImg { get; set; }
+
 	}
 	public enum SheetType { Character, Companion }
 	public enum Score { strength, dexterity, constitution, intelligence, wisdom, charisma }

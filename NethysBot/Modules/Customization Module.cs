@@ -15,7 +15,7 @@ namespace NethysBot.Modules
 	[Name("Customization")]
 	public class CustomizationModule : NethysBase<SocketCommandContext>
 	{
-		[Command("Color")] [Help("color")]
+		[Command("Color")] 
 		[Summary("Changes the color of the embed in your character's sheet.")]
 		public async Task SetColor(string color, string comp = null)
 		{
@@ -24,7 +24,7 @@ namespace NethysBot.Modules
 				var col = new Color(colorvalue);
 
 				var u = GetUser();
-				if(comp == "-c")
+				if(!comp.NullorEmpty() && comp == "-c")
 				{
 					if (u.Companion == null)
 					{
@@ -34,8 +34,7 @@ namespace NethysBot.Modules
 					else
 					{
 						var c = GetCompanion();
-						var i = c.Owners.FindIndex(x => x.Id == Context.User.Id);
-						c.Owners[i].Color = new int[3] { col.R, col.G, col.B };
+						c.Owners[Context.User.Id].Color = new int[3] { col.R, col.G, col.B };
 						UpdateCharacter(c);
 						await ReplyAsync("Changed " + c.Name + "'s color.");
 					}
@@ -50,8 +49,7 @@ namespace NethysBot.Modules
 					else
 					{
 						var c = GetCharacter();
-						var i = c.Owners.FindIndex(x => x.Id == Context.User.Id);
-						c.Owners[i].Color = new int[3] { col.R, col.G, col.B };
+						c.Owners[Context.User.Id].Color = new int[3] { col.R, col.G, col.B };
 						UpdateCharacter(c);
 						await ReplyAsync("Changed " + c.Name + "'s color.");
 					}
@@ -62,14 +60,14 @@ namespace NethysBot.Modules
 				await ReplyAsync("Invalid color code. The color must be a hex code (ie: #DE664D).");
 			}
 		}
-		[Command("Image"),Alias("Thumbail")] [Help("image")]
+		[Command("Image"),Alias("Thumbail")] 
 		[Summary("Overrides the thumbain image for your sheet.")]
-		public async Task image(string ImageUrl, string comp)
+		public async Task image(string ImageUrl, string comp = null)
 		{
 			if (ImageUrl.IsImageUrl())
 			{
 				var u = GetUser();
-				if (comp == "-c")
+				if (!comp.NullorEmpty() && comp == "-c")
 				{
 					if (u.Companion == null)
 					{
@@ -79,8 +77,7 @@ namespace NethysBot.Modules
 					else
 					{
 						var c = GetCompanion();
-						var i = c.Owners.FindIndex(x => x.Id == Context.User.Id);
-						c.Owners[i].ImageUrl = ImageUrl;
+						c.Owners[Context.User.Id].ImageUrl = ImageUrl;
 						UpdateCharacter(c);
 						await ReplyAsync("Changed " + c.Name + "'s thumbnail image.");
 					}
@@ -95,8 +92,7 @@ namespace NethysBot.Modules
 					else
 					{
 						var c = GetCharacter();
-						var i = c.Owners.FindIndex(x => x.Id == Context.User.Id);
-						c.Owners[i].ImageUrl = ImageUrl;
+						c.Owners[Context.User.Id].ImageUrl = ImageUrl;
 						UpdateCharacter(c);
 						await ReplyAsync("Changed " + c.Name + "'s thumbnail image.");
 					}

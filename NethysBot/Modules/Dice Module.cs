@@ -34,7 +34,7 @@ namespace NethysBot.Modules
 					await ReplyAsync("You have no active character.");
 					return;
 				}
-				Expression = ParseValues(Expression, c);
+				Expression = await ParseValues(Expression, c);
 			}
 			try
 			{
@@ -45,6 +45,7 @@ namespace NethysBot.Modules
 				var embed = new EmbedBuilder()
 					.WithTitle(Context.User.Username + " rolled some dice.")
 					.WithDescription(ParseResult(results) + "\nTotal = `" + total + "`");
+
 				Random randonGen = new Random();
 				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
 				randonGen.Next(255));
@@ -59,12 +60,12 @@ namespace NethysBot.Modules
 			}
 
 		}
+		
 		[Command("Check"), Alias("C")]
-		public async Task SkillCheck([Remainder]string Skill)
+		public async Task SkillCheck(string Skill, params string[] args)
 		{
 			Character c;
-			string[] input = Skill.Split("/");
-			if (input.Length > 1 && input.Contains("c"))
+			if (args.Length >= 1 && args.Contains("-c"))
 			{
 				c = GetCompanion();
 				if(c == null)
@@ -81,80 +82,490 @@ namespace NethysBot.Modules
 					await ReplyAsync("You have no active character.");
 					return;
 				}
+			}
 
-			}
-			string b = input.Where(x=>x.ToLower().StartsWith('b')).FirstOrDefault();
-			if (!b.NullorEmpty())
-			{
-				b = "+" + b.Substring(1);
-			}
-			else b = null;
+			string arguments = string.Join(" ", args).Replace("-c","");
 			
 			var sheet = await SheetService.GetFullSheet(c);
 			var values = await SheetService.GetValues(c);
 ;
-			if(!values.HasValues || !sheet.HasValues)
+			if(values == null|| sheet == null)
 			{
-				await ReplyAsync("Seems like your sheet is missing data. Try using the command `!sync` to sync your sheet data. If this error persists try changing any value on your sheet over at [pf2.tools](http://character.pf2.tools) in order to refresh these values and then sync your sheet.");
+				var embed = new EmbedBuilder()
+					.WithTitle("Click here")
+					.WithUrl("https://character.pf2.tools/?" + c.RemoteId)
+					.WithDescription("Seems like we cannot fetch " + c.Name + "'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.");
+				await ReplyAsync("", embed.Build());
 				return;
 			}
 
 			
-			if(input[0].ToLower() == "perception")
+			if(Skill.ToLower() == "perception")
 			{
-				var bonus = values["perception"]["bonus"] ?? 0;
-				var result = Roller.Roll("d20 + " + bonus+ (b??""));
+				JToken bonus;
+				string message = "";
+				if (args.Contains("-f"))
+				{
+					bonus = values["famperception"]["bonus"] ?? 0;
+					arguments = arguments.Replace("-f", "");
+					message = c.Name + "'s familiar makes a Preception check!";
+				}
+				else
+				{
+					bonus = values["perception"]["bonus"] ?? 0;
+					message = c.Name + " makes a Preception check!";
+				}
+				var result = Roller.Roll("d20 + " + bonus + arguments);
 
 				var embed = new EmbedBuilder()
-					.WithTitle(c.Name + " makes a Preception check!")
-					.WithImageUrl(c.ImageUrl)
-					.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`");
+					.WithTitle(message)
+					.WithThumbnailUrl(c.ImageUrl)
+					.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
+					.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString())); ;
 				Random randonGen = new Random();
 				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
 				randonGen.Next(255));
 				embed.WithColor(randomColor);
 
+				if (c.Owners.ContainsKey(Context.User.Id))
+				{
+					var i = c.Owners[Context.User.Id];
+					if (i.Color != null)
+					{
+						embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
+					}
+					if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				}
 				await ReplyAsync("", embed.Build());
 				return;
 			}
 			else
 			{
-				var skill = from sk in sheet["skills"].Children()
-							where ((string)sk["name"]).ToLower().StartsWith(input[0].ToLower()) ||
-							(sk["lore"] != null && ((string)sk["lore"]).ToLower().StartsWith(input[0].ToLower()))
-							orderby sk["name"]
-							select sk;
-
-				if(skill.Count() == 0)
+				JToken bonus;
+				string message = "";
+				if (args.Contains("-f"))
 				{
-					await ReplyAsync("You have no skill whose name starts with that.");
-					return;
+					switch (Skill.ToLower())
+					{
+						case "acrobatics":
+							bonus = values["famacrobatics"]["bonus"] ?? 0;
+							message = c.Name + "'s familiar makes an Acrobatics check!";
+							break;
+						case "stealth":
+							bonus = values["famstealth"]["bonus"] ?? 0;
+							message = c.Name + "'s familiar makes a Stealth check!";
+							break;
+						default:
+							bonus = values["famother"]["bonus"] ?? 0;
+							message = c.Name + "'s familiar makes a skill check!";
+							break;
+					}
+					arguments = arguments.Replace("-f", "");
+				}
+				else
+				{
+					var skill = from sk in sheet["skills"].Children()
+								where ((string)sk["name"]).ToLower().StartsWith(Skill.ToLower()) ||
+								(sk["lore"] != null && ((string)sk["lore"]).ToLower().StartsWith(Skill.ToLower()))
+								orderby sk["name"]
+								select sk;
+
+					if (skill.Count() == 0)
+					{
+						await ReplyAsync("You have no skill whose name starts with that.");
+						return;
+					}
+
+					var s = skill.FirstOrDefault();
+					string name = (string)s["lore"] ?? (string)s["name"];
+					message = c.Name + " makes " + (name.StartsWithVowel() ? "an " : "a ") + name.Uppercase() + " check!";
+					bonus = values[name.ToLower()]["bonus"] ?? 0;
 				}
 
-				var s = skill.FirstOrDefault();
-				string name = (string)s["lore"] ?? (string)s["name"];
-				var bonus = values[name.ToLower()]["bonus"] ?? 0;
-				var result = Roller.Roll("d20 + " + bonus+(b ?? ""));
+				var result = Roller.Roll("d20 + " + bonus + arguments);
 
 				var embed = new EmbedBuilder()
-					.WithTitle(c.Name + " makes "+ (((string)s["name"]).StartsWithVowel()?"an":"") +" " + name.Uppercase() +" check!")
+					.WithTitle(message)
 					.WithThumbnailUrl(c.ImageUrl)
-					.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`");
+					.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
+					.WithFooter((c.ValuesLastUpdated.Outdated()? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
+				
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
 
-				if (Context != null && c.Owners.Any(x => x.Id == Context.User.Id))
+				if (Context != null && c.Owners.ContainsKey(Context.User.Id))
 				{
-					var id = c.Owners.FindIndex(x => x.Id == Context.User.Id);
-					if (c.Owners[id].Color != null)
+					var id = c.Owners[Context.User.Id];
+					if (id.Color != null)
 					{
-						embed.WithColor(new Color(c.Owners[id].Color[0], c.Owners[id].Color[1], c.Owners[id].Color[2]));
+						embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
 					}
-					if (!c.Owners[id].ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(c.Owners[id].ImageUrl);
+					if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
 				}
 
 				await ReplyAsync("", embed.Build());
 			}
 		}
+		[Command("Save"), Alias("sv")]
+		public async Task Save(Ability Throw, params string[] args)
+		{
+			Character c;
+			if (args.Length >= 1 && args.Contains("-c"))
+			{
+				c = GetCompanion();
+				if (c == null)
+				{
+					await ReplyAsync("You have no active companion.");
+					return;
+				}
+			}
+			else
+			{
+				c = GetCharacter();
+				if (c == null)
+				{
+					await ReplyAsync("You have no active character.");
+					return;
+				}
+			}
+
+			string arguments = string.Join(" ", args).Replace("-c", "");
+
+			var sheet = await SheetService.GetFullSheet(c);
+			var values = await SheetService.GetValues(c);
+
+			if (values == null || sheet == null)
+			{
+				var err = new EmbedBuilder()
+					.WithTitle("Click here")
+					.WithUrl("https://character.pf2.tools/?" + c.RemoteId)
+					.WithDescription("Seems like we cannot fetch " + c.Name + "'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.");
+				await ReplyAsync("", err.Build());
+				return;
+			}
+
+			JToken bonus = null;
+			string message = "";
+			if (args.Contains("-f"))
+			{
+				switch ((int)Throw)
+				{
+					case 1:
+						bonus = values["famfort"]["bonus"] ?? 0;
+						message = c.Name + "'s familiar makes a fortitude check!";
+						break;
+					case 2:
+						bonus = values["famref"]["bonus"] ?? 0;
+						message = c.Name + "'s familiar makes a reflex check!";
+						break;
+					case 3:
+						bonus = values["famwill"]["bonus"] ?? 0;
+						message = c.Name + "'s familiar makes a will check!";
+						break;
+				}
+				arguments = arguments.Replace("-f", "");
+			}
+			else
+			{
+				switch ((int)Throw)
+				{
+					case 1:
+						bonus = values["fortitude"]["bonus"] ?? 0;
+						message = c.Name + " makes a fortitude check!";
+						break;
+					case 2:
+						bonus = values["reflex"]["bonus"] ?? 0;
+						message = c.Name + " makes a reflex check!";
+						break;
+					case 3:
+						bonus = values["will"]["bonus"] ?? 0;
+						message = c.Name + " makes a will check!";
+						break;
+				}
+			}
+
+			var result = Roller.Roll("d20 + " + bonus + arguments);
+
+			var embed = new EmbedBuilder()
+				.WithTitle(message)
+				.WithThumbnailUrl(c.ImageUrl)
+				.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
+				.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
+
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
+
+			if (Context != null && c.Owners.ContainsKey(Context.User.Id))
+			{
+				var id = c.Owners[Context.User.Id];
+				if (id.Color != null)
+				{
+					embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
+				}
+				if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
+			}
+
+			await ReplyAsync("", embed.Build());
+		}
+
+		[Command("Ability"), Alias("A")]
+		public async Task ability(Saves saves, params string[] args)
+		{
+			Character c;
+			if (args.Length >= 1 && args.Contains("-c"))
+			{
+				c = GetCompanion();
+				if (c == null)
+				{
+					await ReplyAsync("You have no active companion.");
+					return;
+				}
+			}
+			else
+			{
+				c = GetCharacter();
+				if (c == null)
+				{
+					await ReplyAsync("You have no active character.");
+					return;
+				}
+			}
+
+			string arguments = string.Join(" ", args).Replace("-c", "");
+
+			var sheet = await SheetService.GetFullSheet(c);
+			var values = await SheetService.GetValues(c);
+
+			if (values == null || sheet == null)
+			{
+				var err = new EmbedBuilder()
+					.WithTitle("Click here")
+					.WithUrl("https://character.pf2.tools/?" + c.RemoteId)
+					.WithDescription("Seems like we cannot fetch " + c.Name + "'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.");
+				await ReplyAsync("", err.Build());
+				return;
+			}
+
+			JToken bonus = null;
+			string message = "";
+
+			switch ((int)saves)
+			{
+				case 1:
+					bonus = ((int)values["strength"]["values"]).GetModifier();
+					message = c.Name + " makes a strength check!";
+					break;
+				case 2:
+					bonus = ((int)values["dexterity"]["values"]).GetModifier();
+					message = c.Name + " makes a dexterity check!";
+					break;
+				case 3:
+					bonus = ((int)values["constitution"]["values"]).GetModifier();
+					message = c.Name + " makes a constitution check!";
+					break;
+				case 4:
+					bonus = ((int)values["intelligence"]["values"]).GetModifier();
+					message = c.Name + " makes a intelligence check!";
+					break;
+				case 5:
+					bonus = ((int)values["wisdom"]["values"]).GetModifier();
+					message = c.Name + " makes a wisdom check!";
+					break;
+				case 6:
+					bonus = ((int)values["charisma"]["values"]).GetModifier();
+					message = c.Name + " makes a charisma check!";
+					break;
+			}
+
+			var result = Roller.Roll("d20 + " + bonus + arguments);
+
+			var embed = new EmbedBuilder()
+				.WithTitle(message)
+				.WithThumbnailUrl(c.ImageUrl)
+				.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
+				.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
+
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
+
+			if (Context != null && c.Owners.ContainsKey(Context.User.Id))
+			{
+				var id = c.Owners[Context.User.Id];
+				if (id.Color != null)
+				{
+					embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
+				}
+				if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
+			}
+
+			await ReplyAsync("", embed.Build());
+		}
+		
+		[Command("Strike"), Alias("S")]
+		public async Task Attack(string Strike, params string[] args)
+		{
+			Character c;
+			if (args.Length >= 1 && args.Contains("-c"))
+			{
+				c = GetCompanion();
+				if (c == null)
+				{
+					await ReplyAsync("You have no active companion.");
+					return;
+				}
+			}
+			else
+			{
+				c = GetCharacter();
+				if (c == null)
+				{
+					await ReplyAsync("You have no active character.");
+					return;
+				}
+			}
+
+			string arguments = string.Join(" ", args).Replace("-c", "");
+
+			var Jstrikes = await SheetService.Get(c,"strikes");
+			var values = await SheetService.GetValues(c);
+
+			if (values == null || Jstrikes == null)
+			{
+				var err = new EmbedBuilder()
+					.WithTitle("Click here")
+					.WithUrl("https://character.pf2.tools/?" + c.RemoteId)
+					.WithDescription("Seems like we cannot fetch " + c.Name + "'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.");
+				await ReplyAsync("", err.Build());
+				return;
+			}
+
+			var strikes = from sk in Jstrikes.Children()
+						where ((string)sk["name"]).ToLower().StartsWith(Strike.ToLower())
+						orderby sk["name"]
+						select sk;
+
+			if (strikes.Count() == 0)
+			{
+				await ReplyAsync("You have no attacks whose name starts with that.");
+				return;
+			}
+
+			var s = strikes.FirstOrDefault();
+			var embed = new EmbedBuilder()
+				.WithTitle(c.Name + " strikes with a " + (s["name"] ?? "Unnamed Strike") + "!")
+				.WithThumbnailUrl(c.ImageUrl);
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
+
+			if (Context != null && c.Owners.ContainsKey(Context.User.Id))
+			{
+				var id = c.Owners[Context.User.Id];
+				if (id.Color != null)
+				{
+					embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
+				}
+				if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
+			}
+
+
+			string hit = "";
+			string dmg = "";
+			string bonus = "";
+			string dmgtype = "Untyped";
+
+			switch ((string)s["attack"])
+			{
+				case "spell":
+					hit = (string)values["ranged " + (string)s["name"]]["bonus"];
+
+					if (!((string)s["overridedamage"]).NullorEmpty())
+					{
+						dmg = await ParseValues((string)s["overridedamage"],c,values);
+					}
+					break;
+				default:
+					if(sheet["items"].Any(x => x["id"] == s["weapon"]))
+					{
+						await ReplyAsync("This strike has no linked item. Assign a spell to this strike before you roll it.");
+					}
+					var i = sheet["items"].First(x => x["id"] == s["weapon"]);
+
+					if((string)s["attack"] == "melee")
+					{
+						hit = (string)values["melee " + (string)s["name"]]["bonus"];
+						bonus += ((int)values["strength"]["bonus"]).PrintModifier();
+					}
+					else
+					{
+						hit = (string)values["ranged " + (string)s["name"]]["bonus"];
+					}
+					dmg = (string)values["damagedice " + (string)s["name"]]["bonus"] + GetDie((int)values["damagedie " + (string)s["name"]]["bonus"]);
+
+					bonus += s["moddamage"] ?? " ";
+
+					dmgtype = (string)s["damagetype"] ?? "Untyped";
+					
+					break;
+			}
+			string summary = "";
+
+			var result = Roller.Roll("d20 + " + hit + arguments);
+
+			summary += "Attack roll: "+ ParseResult(result) + " = `" + result.Value + "`";
+
+			if (!dmg.NullorEmpty())
+			{
+				try
+				{
+					RollResult result2 = Roller.Roll(dmg);
+					summary += "\n"+ dmgtype+ " damage: " + ParseResult(result2)+ " = `"+ result2.Value+"` " ;
+
+					if (!((string)s["extradamage"]).NullorEmpty())
+					{
+						RollResult result3 = Roller.Roll((string)s["extradamage"]);
+						summary += "\n" + s["overridedamage"] + " damage: " + ParseResult(result3) + " = `" + result3.Value + "`";
+					}
+				}
+				catch
+				{
+					await ReplyAsync("It seems like this strike doesn't have a valid dice roll on its damage or additional damage fields. If this is a spell make sure you have a valid dice expression on the damage fields.");
+				}
+			}
+			
+			
+			embed.WithDescription(summary)
+				.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
+
+			
+
+			await ReplyAsync("", embed.Build());
+		}
+
 		public enum Saves { fort = 1, fortitude = 1, reflex = 2, will = 3 }
+		public enum Ability { strength = 1, str = 1, dexterity = 2, dex = 2, constitution = 3, con = 3, intelligence = 4, wisdom = 5, wis = 5, charisma = 6, cha = 6 }
+		private Dictionary<string, int> Striking { get; set; } = new Dictionary<string, int>()
+		{
+			{"", 0},
+			{"striking", 1 },
+			{"greater striking", 2 },
+			{"major striking", 3 }
+		};
+		private string[] DieScale = { "d1","d2","d4","d6","d8","d10", "d12" };
+		private string GetDie(int mod)
+		{
+			mod--;
+			if (mod <= 0) return DieScale[0];
+			else if (mod > 6) return DieScale[6] + "+" + (mod - 6);
+			else return DieScale[mod];
+		}
 		private string ParseResult (RollResult result)
 		{
 			var sb = new StringBuilder();
@@ -229,23 +640,26 @@ namespace NethysBot.Modules
 
 			return sb.ToString().Trim();
 		}
-		private async Task<string> ParseValues(string Raw, Character c)
+		private async Task<string> ParseValues(string Raw, Character c, JObject values = null)
 		{
-			var values = await SheetService.GetValues(c);
 			if(values == null)
 			{
-				foreach (Match m in AttributeRegex.Matches(Raw))
+				values = await SheetService.GetValues(c);
+				if (values == null)
 				{
-					Raw = Raw.Replace(m.Value, "");
+					foreach (Match m in AttributeRegex.Matches(Raw))
+					{
+						Raw = Raw.Replace(m.Value, "");
+					}
+					return Raw;
 				}
-				return Raw;
 			}
 
 			foreach(Match m in AttributeRegex.Matches(Raw))
 			{
-				if (Enum.TryParse<Score>(m.Groups[2].Value.ToLower(),out Score sc))
+				if (Enum.TryParse(m.Groups[2].Value.ToLower(),out Score sc))
 				{
-					Raw = Raw.Replace(m.Value, ((int)values[m.Groups[2].Value.ToLower()]["value"]).Modifier().ToString());
+					Raw = Raw.Replace(m.Value, ((int)values[m.Groups[2].Value.ToLower()]["value"]).GetModifier().ToString());
 				}
 				if (values.TryGetValue(m.Groups[2].Value,out JToken jToken))
 				{

@@ -77,7 +77,7 @@ namespace NethysBot.Helpers
 
 			var Characters = Database.GetCollection<Character>("Characters");
 
-			var chars = Characters.Find(x => x.Owners.Select(z=>z.Id).Any(y => y == Context.User.Id));
+			var chars = Characters.Find(x => x.Owners.ContainsKey(Context.User.Id));
 
 			return chars.ToList();
 		}

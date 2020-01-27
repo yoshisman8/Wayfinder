@@ -53,7 +53,7 @@ namespace NethysBot.Modules
 
 		}
 
-		[Command("Character"), Alias("Char")]
+		[Command("Character"), Alias("Char", "Sheet")]
 		[Summary("Display your active character's sheet or change your active character.")]
 		public async Task GetSheet([Remainder] string Name = null)
 		{
@@ -76,13 +76,21 @@ namespace NethysBot.Modules
 			}
 			else
 			{
-				var chars = GetAllSheets().Where(x=>x.Type == SheetType.Character && x.Name.ToLower().StartsWith(Name.ToLower()));
-
-				if(chars.Count() == 0)
+				var all = GetAllSheets();
+				if (all.Count() == 0)
 				{
 					await ReplyAsync("You have no characters! Import one by using the `!import` command.");
 					return;
 				}
+
+				var chars = all.Where(x => x.Type == SheetType.Character && x.Name.ToLower().StartsWith(Name.ToLower()));
+
+				if (chars.Count() == 0)
+				{
+					await ReplyAsync("You have no character whose name starts with that.");
+					return;
+				}
+
 				else if(chars.Count() == 1)
 				{
 					var u = GetUser();
@@ -135,7 +143,29 @@ namespace NethysBot.Modules
 				}
 			}
 		}
+		
+		[Command("Familiar"), Alias("Fam")]
+		public async Task Familiar()
+		{
+			var c = GetCharacter();
 
+			if (c == null)
+			{
+				await ReplyAsync("You have no active character.");
+				return;
+			}
+			var msg = await ReplyAsync("Loading sheet...");
+
+			var embed = await SheetService.ShowFamiliar(c,Context);
+			if(embed == null)
+			{
+				await msg.ModifyAsync(x=>x.Content = c.Name + " has no named familiars.");
+				return;
+			}
+
+			await msg.ModifyAsync(x => x.Embed = embed);
+			await msg.ModifyAsync(x => x.Content = " ");
+		}
 		[Command("Companion"), Alias("Comp")]
 		[Summary("Display your active companion's sheet or change your active companion.")]
 		public async Task Companion([Remainder] string Name = null)
@@ -152,18 +182,25 @@ namespace NethysBot.Modules
 
 				var msg = await ReplyAsync("Loading sheet...");
 
-				var embed = await SheetService.GetSheet(c);
+				var embed = await SheetService.GetSheet(c,Context);
 
 				await msg.ModifyAsync(x => x.Embed = embed);
 				await msg.ModifyAsync(x => x.Content = " ");
 			}
 			else
 			{
-				var chars = GetAllSheets().Where(x => x.Type == SheetType.Companion && x.Name.ToLower().StartsWith(Name.ToLower()));
+				var all = GetAllSheets();
+				if (all.Count() == 0)
+				{
+					await ReplyAsync("You have no companions! Import one by using the `!import` command.");
+					return;
+				}
+
+				var chars = all.Where(x => x.Type == SheetType.Companion && x.Name.ToLower().StartsWith(Name.ToLower()));
 
 				if (chars.Count() == 0)
 				{
-					await ReplyAsync("You have no companions! Import one by using the `!import` command.");
+					await ReplyAsync("You have no companion whose name starts with that.");
 					return;
 				}
 				else if (chars.Count() == 1)
@@ -277,8 +314,7 @@ namespace NethysBot.Modules
 					u.Companion = null;
 					UpdateUser(u);
 				}
-				int i = c.Owners.FindIndex(x => x.Id == Context.User.Id);
-				c.Owners.RemoveAt(i);
+				c.Owners.Remove(Context.User.Id);
 				UpdateCharacter(c);
 				await ReplyAsync("Deleted character `" + c.Name + "`.");
 				return;
@@ -322,8 +358,7 @@ namespace NethysBot.Modules
 							u.Companion = null;
 							UpdateUser(u);
 						}
-						int i = c.Owners.FindIndex(x => x.Id == Context.User.Id);
-						c.Owners.RemoveAt(i);
+						c.Owners.Remove(Context.User.Id);
 						UpdateCharacter(c);
 						await ReplyAsync("Deleted character `" + c.Name + "`.");
 						return;
@@ -362,7 +397,7 @@ namespace NethysBot.Modules
 				names.Add(comp.Name);
 			}
 			
-			await msg.ModifyAsync(x => x.Content = "Synce " + string.Join(" and ",names) + " with their latest remote version.");
+			await msg.ModifyAsync(x => x.Content = "Synced " + string.Join(" and ",names) + " with their latest remote version.");
 		}
 	}
 }

@@ -18,7 +18,7 @@ namespace NethysBot.Helpers
 			using (var resp = req.GetResponse())
 			{
 				return resp.ContentType.ToLower(CultureInfo.InvariantCulture)
-						.StartsWith("image/");
+						.StartsWith("image/",StringComparison.OrdinalIgnoreCase);
 			}
 		}
 		public static bool NullorEmpty(this string _string)
@@ -33,25 +33,47 @@ namespace NethysBot.Helpers
 			if (results == null || results.Count() == 0) return null;
 			else return results.FirstOrDefault();
 		}
+		/// <summary>
+		/// Calculates the modifier bonus of an int
+		/// 12 = 2; 8 = -1;
+		/// </summary>
+		/// <param name="score"></param>
+		/// <returns></returns>
 		public static int GetModifier(this int score)
 		{
 			return (int)Math.Floor((decimal)((score - 10) / 2));
 		}
-		public static int Modifier(this int score)
-		{
-			int modifier = (int)Math.Floor((decimal)((score - 10) / 2));
-			return modifier;
-		}
+		/// <summary>
+		/// Prints the modifier for an int.
+		/// 12 = "+2"; 10 = "+0"; 8 = "-1";
+		/// </summary>
+		/// <param name="score"></param>
+		/// <returns></returns>
 		public static string PrintModifier(this  int score)
 		{
-			int modifier = (int)Math.Floor((decimal)((score - 10) / 2));
+			int modifier = GetModifier(score);
 			return modifier >= 0 ? "+" + modifier : modifier.ToString();
 		}
+		/// <summary>
+		/// Turn a string into a bonus string value
+		/// 10 = "+10", 0 = "+0"; -5 = "-5"
+		/// </summary>
+		/// <param name="value"></param>
+		/// <returns></returns>
 		public static string ToModifierString(this int value)
 		{
 			return value >= 0 ? "+" + value : value.ToString();
 		}
-
+		/// <summary>
+		/// Check if it's been at least an x amount of time since the last update.
+		/// </summary>
+		/// <param name="dt1"></param>
+		/// <param name="span"></param>
+		/// <returns></returns>
+		public static bool Outdated(this DateTime dt1)
+		{
+			return (DateTime.Now - dt1) > TimeSpan.FromSeconds(3);
+		}
 		public static string FixLength(this string text, int length, TextPadding padding = TextPadding.After)
 		{
 			if (text.Length >= length) return text.Substring(0,length);
@@ -69,7 +91,12 @@ namespace NethysBot.Helpers
 					return def;
 			}
 		}
-		
+		/// <summary>
+		/// Capitalizes the first char of a string
+		/// hello -> Hello
+		/// </summary>
+		/// <param name="text"></param>
+		/// <returns></returns>
 		public static string Uppercase(this string text)
 		{
 			if(text.NullorEmpty())
