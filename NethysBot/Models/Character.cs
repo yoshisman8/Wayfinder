@@ -8,14 +8,15 @@ namespace NethysBot.Models
 {
 	public class Character
 	{
+		[BsonId]
+		public int InternalId { get; set; }
 		/// <summary> 
 		/// Individual per-user settings
 		/// </summary>
-		public Dictionary<ulong,UserSettings> Owners { get; set; } = new Dictionary<ulong, UserSettings>();
+		public ulong Owner { get; set; }
 		/// <summary>
 		/// ID on characters.pf2.tools.
 		/// </summary>
-		[BsonId]
 		public string RemoteId { get; set; }
 		/// <summary>
 		/// Character Name for easy querying.
@@ -45,14 +46,10 @@ namespace NethysBot.Models
 		/// Url of the character's familiar
 		/// </summary>
 		public string FamImg { get; set; }
+		public int[] Color { get; set; } = null;
 
 	}
 	public enum SheetType { Character, Companion }
 	public enum Score { strength, dexterity, constitution, intelligence, wisdom, charisma }
-	public class UserSettings
-	{
-		public ulong Id { get; set; }
-		public int[] Color { get; set; } = null;
-		public string ImageUrl { get; set; }
-	}
+
 }

@@ -33,7 +33,7 @@ namespace NethysBot.Helpers
 				}
 				else
 				{
-					await msg.ModifyAsync(x => x.Content = Content);
+					await msg.ModifyAsync(x => x.Content = Content.Trim().NullorEmpty()?".":Content);
 					await msg.ModifyAsync(x => x.Embed = Embed);
 					return msg;
 				}
@@ -53,9 +53,7 @@ namespace NethysBot.Helpers
 		public Character GetCharacter()
 		{
 			var user = GetUser();
-			var col = Database.GetCollection<Character>("Characters");
-			var c = col.FindOne(x => x.RemoteId == user.Character);
-			return c;
+			return user.Character;
 		}
 		/// <summary>
 		/// Gets the current user's active animal companion
@@ -64,9 +62,7 @@ namespace NethysBot.Helpers
 		public Character GetCompanion()
 		{
 			var user = GetUser();
-			var col = Database.GetCollection<Character>("Characters");
-			var c = col.FindOne(x=> x.RemoteId == user.Companion);
-			return c;
+			return user.Companion;
 		}
 		/// <summary>
 		/// Gets the current user's characters and companions.
@@ -77,7 +73,7 @@ namespace NethysBot.Helpers
 
 			var Characters = Database.GetCollection<Character>("Characters");
 
-			var chars = Characters.Find(x => x.Owners.ContainsKey(Context.User.Id));
+			var chars = Characters.Find(x => x.Owner == Context.User.Id);
 
 			return chars.ToList();
 		}
@@ -98,7 +94,7 @@ namespace NethysBot.Helpers
 				});
 			}
 
-			var user = Users.FindOne(x=>x.Id == Context.User.Id.ToString());
+			var user = Users.IncludeAll().FindOne(x=>x.Id == Context.User.Id.ToString());
 
 			return user;
 		}
@@ -114,6 +110,11 @@ namespace NethysBot.Helpers
 			var chars = Database.GetCollection<Character>("Characters");
 
 			chars.Update(C);
+		}
+		public void DeleteCharacter(Character c)
+		{
+			var chars = Database.GetCollection<Character>("Characters");
+			chars.Delete(c.InternalId);
 		}
 	}
 }

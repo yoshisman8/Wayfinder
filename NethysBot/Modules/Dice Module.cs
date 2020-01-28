@@ -127,15 +127,11 @@ namespace NethysBot.Modules
 				randonGen.Next(255));
 				embed.WithColor(randomColor);
 
-				if (c.Owners.ContainsKey(Context.User.Id))
+				if (c.Color != null)
 				{
-					var i = c.Owners[Context.User.Id];
-					if (i.Color != null)
-					{
-						embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-					}
-					if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+					embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 				}
+				
 				await ReplyAsync("", embed.Build());
 				return;
 			}
@@ -195,17 +191,12 @@ namespace NethysBot.Modules
 				randonGen.Next(255));
 				embed.WithColor(randomColor);
 
-				if (Context != null && c.Owners.ContainsKey(Context.User.Id))
+				if (c.Color != null)
 				{
-					var id = c.Owners[Context.User.Id];
-					if (id.Color != null)
-					{
-						embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
-					}
-					if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
+					embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 				}
 
-				await ReplyAsync("", embed.Build());
+				await ReplyAsync(" ", embed.Build());
 			}
 		}
 		[Command("Save"), Alias("sv")]
@@ -299,17 +290,12 @@ namespace NethysBot.Modules
 			randonGen.Next(255));
 			embed.WithColor(randomColor);
 
-			if (Context != null && c.Owners.ContainsKey(Context.User.Id))
+			if (c.Color != null)
 			{
-				var id = c.Owners[Context.User.Id];
-				if (id.Color != null)
-				{
-					embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
-				}
-				if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
-			await ReplyAsync("", embed.Build());
+			await ReplyAsync(" ", embed.Build());
 		}
 
 		[Command("Ability"), Alias("A")]
@@ -394,21 +380,16 @@ namespace NethysBot.Modules
 			randonGen.Next(255));
 			embed.WithColor(randomColor);
 
-			if (Context != null && c.Owners.ContainsKey(Context.User.Id))
+			if (c.Color != null)
 			{
-				var id = c.Owners[Context.User.Id];
-				if (id.Color != null)
-				{
-					embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
-				}
-				if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
-			await ReplyAsync("", embed.Build());
+			await ReplyAsync(" ", embed.Build());
 		}
 		
 		[Command("Strike"), Alias("S")]
-		public async Task Attack(string Strike, params string[] args)
+		public async Task Attack(string Strike = null, params string[] args)
 		{
 			Character c;
 			if (args.Length >= 1 && args.Contains("-c"))
@@ -429,135 +410,212 @@ namespace NethysBot.Modules
 					return;
 				}
 			}
-
-			string arguments = string.Join(" ", args).Replace("-c", "");
-
-			var Jstrikes = await SheetService.Get(c,"strikes");
-			var values = await SheetService.GetValues(c);
-
-			if (values == null || Jstrikes == null)
+			if (Strike.NullorEmpty())
 			{
-				var err = new EmbedBuilder()
-					.WithTitle("Click here")
-					.WithUrl("https://character.pf2.tools/?" + c.RemoteId)
-					.WithDescription("Seems like we cannot fetch " + c.Name + "'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.");
-				await ReplyAsync("", err.Build());
-				return;
-			}
+				var strikes = await SheetService.Get(c, "strikes");
+				var embed = new EmbedBuilder()
+					.WithTitle(c.Name + "'s strikes")
+					.WithThumbnailUrl(c.ImageUrl);
 
-			var strikes = from sk in Jstrikes.Children()
-						where ((string)sk["name"]).ToLower().StartsWith(Strike.ToLower())
-						orderby sk["name"]
-						select sk;
-
-			if (strikes.Count() == 0)
-			{
-				await ReplyAsync("You have no attacks whose name starts with that.");
-				return;
-			}
-
-			var s = strikes.FirstOrDefault();
-			var embed = new EmbedBuilder()
-				.WithTitle(c.Name + " strikes with a " + (s["name"] ?? "Unnamed Strike") + "!")
-				.WithThumbnailUrl(c.ImageUrl);
-			Random randonGen = new Random();
-			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
-			randonGen.Next(255));
-			embed.WithColor(randomColor);
-
-			if (Context != null && c.Owners.ContainsKey(Context.User.Id))
-			{
-				var id = c.Owners[Context.User.Id];
-				if (id.Color != null)
+				if (strikes.Count() == 0)
 				{
-					embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
+					await ReplyAsync(c.Name + " has no strikes.");
+					return;
+				}				
+
+				var sb = new StringBuilder();
+				foreach (var s in strikes)
+				{
+					string act = Icons.Actions["1"];
+					if (!((string)s["action"]).NullorEmpty())
+					{
+						if (Icons.Actions.TryGetValue((string)s["action"], out string ic))
+						{
+							act = ic;
+						}
+						else act = "[" + s["action"] + "]";
+					}
+					sb.AppendLine(Icons.Strike[(string)s["attack"]] +" " +(((string)s["name"]).NullorEmpty()? "Unnamed Strike": (string)s["name"]) + " " + act);
 				}
-				if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
+				embed.WithDescription(sb.ToString());
+
+				if (c.Color != null)
+				{
+					embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
+				}
+				else
+				{
+					Random randonGen = new Random();
+					Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+					randonGen.Next(255));
+					embed.WithColor(randomColor);
+				}
+
+				await ReplyAsync("", embed.Build());
+				return;
 			}
-
-
-			string hit = "";
-			string dmg = "";
-			string bonus = "";
-			string dmgtype = "Untyped";
-
-			switch ((string)s["attack"])
+			else
 			{
-				case "spell":
+				string arguments = string.Join(" ", args).Replace("-c", "");
+
+				var Jstrikes = await SheetService.Get(c, "strikes");
+				var values = await SheetService.GetValues(c);
+
+				if (values == null || Jstrikes == null)
+				{
+					var err = new EmbedBuilder()
+						.WithTitle("Click here")
+						.WithUrl("https://character.pf2.tools/?" + c.RemoteId)
+						.WithDescription("Seems like we cannot fetch " + c.Name + "'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.");
+					await ReplyAsync("", err.Build());
+					return;
+				}
+
+				var strikes = from sk in Jstrikes
+							  where ((string)sk["name"]).ToLower().StartsWith(Strike.ToLower())
+							  orderby sk["name"]
+							  select sk;
+
+				if (strikes.Count() == 0)
+				{
+					await ReplyAsync("You have no strikes whose name starts with that.");
+					return;
+				}
+
+				var s = strikes.FirstOrDefault();
+				var embed = new EmbedBuilder()
+					.WithTitle(c.Name + " strikes with a " + (((string)s["name"]).NullorEmpty() ? "Unnamed Strike" : (string)s["name"]) + "!")
+					.WithThumbnailUrl(c.ImageUrl);
+
+				if (c.Color != null)
+				{
+					embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
+				}
+				else
+				{
+					Random randonGen = new Random();
+					Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+					randonGen.Next(255));
+					embed.WithColor(randomColor);
+				}
+
+				await ReplyAsync("Rolling...");
+
+				string hit = "";
+				string dmg = "";
+				string bonus = "";
+				string dmgtype = "Untyped";
+
+				if ((string)s["attack"] == "spell")
+				{
 					hit = (string)values["ranged " + (string)s["name"]]["bonus"];
-
-					if (!((string)s["overridedamage"]).NullorEmpty())
+					dmg = (string)s["overridedamage"];
+					if (!dmg.NullorEmpty() && AttributeRegex.IsMatch(dmg))
 					{
-						dmg = await ParseValues((string)s["overridedamage"],c,values);
+						dmg = await ParseValues(dmg, c, values);
 					}
-					break;
-				default:
-					if(sheet["items"].Any(x => x["id"] == s["weapon"]))
-					{
-						await ReplyAsync("This strike has no linked item. Assign a spell to this strike before you roll it.");
-					}
-					var i = sheet["items"].First(x => x["id"] == s["weapon"]);
 
-					if((string)s["attack"] == "melee")
+					string summary = "";
+
+					var result = Roller.Roll("d20 + " + hit + arguments);
+
+					summary += "Attack roll: " + ParseResult(result) + " = `" + result.Value + "`";
+
+					if (!dmg.NullorEmpty())
+					{
+						try
+						{
+							RollResult result2 = Roller.Roll(dmg + bonus);
+							summary += "\n" + dmgtype.Uppercase() + " damage: " + ParseResult(result2) + " = `" + result2.Value + "` ";
+
+							if (!((string)s["extradamage"]).NullorEmpty())
+							{
+								RollResult result3 = Roller.Roll((string)s["extradamage"]);
+								summary += "\n" + ((string)s["overridedamage"]).Uppercase() + " damage: " + ParseResult(result3) + " = `" + result3.Value + "`";
+							}
+						}
+						catch
+						{
+							await ReplyAsync("It seems like this strike doesn't have a valid dice roll on its damage or additional damage fields. If this is a spell make sure you have a valid dice expression on the damage fields.");
+							return;
+						}
+					}
+
+
+					embed.WithDescription(summary)
+						.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
+
+
+
+					await ReplyAsync(" ", embed.Build());
+				}
+				else
+				{
+					if (!((string)s["weapon"]).NullorEmpty())
+					{
+						var items = await SheetService.Get(c, "items");
+						var i = items.First(x => (string)x["id"] == (string)s["weapon"]);
+						dmgtype = (string)i["damagetype"] ?? "Untyped";
+					}
+					else
+					{
+						dmgtype = "Bludgeoning";
+					}
+
+					if ((string)s["attack"] == "melee")
 					{
 						hit = (string)values["melee " + (string)s["name"]]["bonus"];
-						bonus += ((int)values["strength"]["bonus"]).PrintModifier();
+						bonus += ((int)values["strength"]["value"]).PrintModifier();
 					}
 					else
 					{
 						hit = (string)values["ranged " + (string)s["name"]]["bonus"];
 					}
-					dmg = (string)values["damagedice " + (string)s["name"]]["bonus"] + GetDie((int)values["damagedie " + (string)s["name"]]["bonus"]);
-
-					bonus += s["moddamage"] ?? " ";
-
-					dmgtype = (string)s["damagetype"] ?? "Untyped";
 					
-					break;
-			}
-			string summary = "";
+					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
 
-			var result = Roller.Roll("d20 + " + hit + arguments);
+					bonus += (int)s["moddamage"] > 0 ? ((int)s["moddamage"]).ToModifierString() : "";
 
-			summary += "Attack roll: "+ ParseResult(result) + " = `" + result.Value + "`";
+					string summary = "";
 
-			if (!dmg.NullorEmpty())
-			{
-				try
-				{
-					RollResult result2 = Roller.Roll(dmg);
-					summary += "\n"+ dmgtype+ " damage: " + ParseResult(result2)+ " = `"+ result2.Value+"` " ;
+					var result = Roller.Roll("d20 + " + hit + arguments);
 
-					if (!((string)s["extradamage"]).NullorEmpty())
+					summary += "Attack roll: " + ParseResult(result) + " = `" + result.Value + "`";
+
+					if (!dmg.NullorEmpty())
 					{
-						RollResult result3 = Roller.Roll((string)s["extradamage"]);
-						summary += "\n" + s["overridedamage"] + " damage: " + ParseResult(result3) + " = `" + result3.Value + "`";
+						try
+						{
+							RollResult result2 = Roller.Roll(dmg + bonus);
+							summary += "\n" + dmgtype.Uppercase() + " damage: " + ParseResult(result2) + " = `" + result2.Value + "` ";
+
+							if (!((string)s["extradamage"]).NullorEmpty())
+							{
+								RollResult result3 = Roller.Roll((string)s["extradamage"]);
+								summary += "\n" + ((string)s["overridedamage"]).Uppercase() + " damage: " + ParseResult(result3) + " = `" + result3.Value + "`";
+							}
+						}
+						catch
+						{
+							await ReplyAsync("It seems like this strike doesn't have a valid dice roll on its damage or additional damage fields. If this is a spell make sure you have a valid dice expression on the damage fields.");
+							return;
+						}
 					}
-				}
-				catch
-				{
-					await ReplyAsync("It seems like this strike doesn't have a valid dice roll on its damage or additional damage fields. If this is a spell make sure you have a valid dice expression on the damage fields.");
+
+
+					embed.WithDescription(summary)
+						.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
+
+
+
+					await ReplyAsync(" ", embed.Build());
 				}
 			}
-			
-			
-			embed.WithDescription(summary)
-				.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
-
-			
-
-			await ReplyAsync("", embed.Build());
 		}
 
 		public enum Saves { fort = 1, fortitude = 1, reflex = 2, will = 3 }
 		public enum Ability { strength = 1, str = 1, dexterity = 2, dex = 2, constitution = 3, con = 3, intelligence = 4, wisdom = 5, wis = 5, charisma = 6, cha = 6 }
-		private Dictionary<string, int> Striking { get; set; } = new Dictionary<string, int>()
-		{
-			{"", 0},
-			{"striking", 1 },
-			{"greater striking", 2 },
-			{"major striking", 3 }
-		};
+
 		private string[] DieScale = { "d1","d2","d4","d6","d8","d10", "d12" };
 		private string GetDie(int mod)
 		{

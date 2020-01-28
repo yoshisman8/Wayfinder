@@ -12,10 +12,12 @@ namespace NethysBot.Models
 		/// <summary>
 		/// ID of the user's current active character
 		/// </summary>
-		public string Character { get; set; }
+		[BsonRef("Characters")]
+		public Character Character { get; set; }
 		/// <summary>
 		/// ID of the user's current active companion
 		/// </summary>
-		public string Companion { get; set; }
+		[BsonRef("Characters")]
+		public Character Companion { get; set; }
 	}
 }

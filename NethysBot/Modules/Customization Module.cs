@@ -34,7 +34,7 @@ namespace NethysBot.Modules
 					else
 					{
 						var c = GetCompanion();
-						c.Owners[Context.User.Id].Color = new int[3] { col.R, col.G, col.B };
+						c.Color = new int[3] { col.R, col.G, col.B };
 						UpdateCharacter(c);
 						await ReplyAsync("Changed " + c.Name + "'s color.");
 					}
@@ -49,7 +49,7 @@ namespace NethysBot.Modules
 					else
 					{
 						var c = GetCharacter();
-						c.Owners[Context.User.Id].Color = new int[3] { col.R, col.G, col.B };
+						c.Color = new int[3] { col.R, col.G, col.B };
 						UpdateCharacter(c);
 						await ReplyAsync("Changed " + c.Name + "'s color.");
 					}
@@ -58,49 +58,6 @@ namespace NethysBot.Modules
 			else
 			{
 				await ReplyAsync("Invalid color code. The color must be a hex code (ie: #DE664D).");
-			}
-		}
-		[Command("Image"),Alias("Thumbail")] 
-		[Summary("Overrides the thumbain image for your sheet.")]
-		public async Task image(string ImageUrl, string comp = null)
-		{
-			if (ImageUrl.IsImageUrl())
-			{
-				var u = GetUser();
-				if (!comp.NullorEmpty() && comp == "-c")
-				{
-					if (u.Companion == null)
-					{
-						await ReplyAsync("You have no active companion to assign this color to.");
-						return;
-					}
-					else
-					{
-						var c = GetCompanion();
-						c.Owners[Context.User.Id].ImageUrl = ImageUrl;
-						UpdateCharacter(c);
-						await ReplyAsync("Changed " + c.Name + "'s thumbnail image.");
-					}
-				}
-				else
-				{
-					if (u.Character == null)
-					{
-						await ReplyAsync("You have no active character to assign this color to.");
-						return;
-					}
-					else
-					{
-						var c = GetCharacter();
-						c.Owners[Context.User.Id].ImageUrl = ImageUrl;
-						UpdateCharacter(c);
-						await ReplyAsync("Changed " + c.Name + "'s thumbnail image.");
-					}
-				}
-			}
-			else
-			{
-				await ReplyAsync("Invalid url/Not an image url.");
 			}
 		}
 	}

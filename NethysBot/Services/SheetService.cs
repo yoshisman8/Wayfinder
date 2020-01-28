@@ -40,7 +40,7 @@ namespace NethysBot.Services
 		/// </summary>
 		/// <param name="url">Url of the character</param>
 		/// <returns>Parsed and updated character</returns>
-		public async Task<Character> NewCharacter(string url, SocketCommandContext context = null)
+		public async Task<Character> NewCharacter(string url, SocketCommandContext context)
 		{
 			var regex = new Regex(@"(\w*\W*)?\?(\w*)\-?");
 
@@ -53,17 +53,11 @@ namespace NethysBot.Services
 
 			var id = match.Groups[2].Value;
 
-			if (!collection.Exists(x => x.RemoteId == id))
+			Character character = new Character()
 			{
-				var c = new Character()
-				{
-					RemoteId = id
-				};
-
-				collection.Insert(c);
-			}
-
-			Character character = collection.FindOne(x => x.RemoteId == id);
+				Owner = context.User.Id,
+				RemoteId = id
+			};
 
 			HttpResponseMessage response = await Client.GetAsync(Api + id);
 
@@ -80,10 +74,6 @@ namespace NethysBot.Services
 
 			character.LastUpdated = DateTime.Now;
 
-			if (context != null) 
-			{
-				if (!character.Owners.ContainsKey(context.User.Id)) character.Owners.Add(context.User.Id, new UserSettings() { Id = context.User.Id });
-			}
 
 			character.Type = Enum.Parse<SheetType>(((string)json["data"]["type"]).Uppercase());
 
@@ -111,11 +101,11 @@ namespace NethysBot.Services
 				}
 			}
 
-			collection.Update(character);
+			collection.Insert(character);
 			collection.EnsureIndex("character", "LOWER($.Name)");
 			collection.EnsureIndex(x => x.RemoteId);
 			collection.EnsureIndex(x => x.Type);
-			collection.EnsureIndex("character","$.Owner[*]");
+			collection.EnsureIndex(x => x.Owner);
 
 			return collection.FindOne(x => x.RemoteId == id);
 		}
@@ -210,7 +200,7 @@ namespace NethysBot.Services
 				return (JObject)json["data"];
 			}
 		}
-		public async Task<JObject> Get(Character c, string endpoint)
+		public async Task<JArray> Get(Character c, string endpoint)
 		{
 			HttpResponseMessage response = await Client.GetAsync(Api + c.RemoteId + "/"+endpoint);
 
@@ -222,7 +212,7 @@ namespace NethysBot.Services
 
 			if ((json["data"] == null || !json["data"].HasValues)) return null;
 
-			else return (JObject)json["data"];
+			else return (JArray)json["data"];
 
 		}
 		
@@ -368,14 +358,9 @@ namespace NethysBot.Services
 			randonGen.Next(255));
 			embed.WithColor(randomColor);
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
 			embed.WithFooter(c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Data might not be accurate" : "Last updated: " +c.LastUpdated.ToString());
@@ -416,14 +401,9 @@ namespace NethysBot.Services
 				embed.WithUrl((string)feat["src"]);
 			}
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
 			return embed.Build();
@@ -446,14 +426,9 @@ namespace NethysBot.Services
 				.WithTitle(c.Name + "'s Feats")
 				.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
 			var sb = new StringBuilder();
@@ -495,14 +470,9 @@ namespace NethysBot.Services
 
 			embed.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
 			return embed.Build();
@@ -525,14 +495,9 @@ namespace NethysBot.Services
 				.WithTitle(c.Name + "'s Features")
 				.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
 			var sb = new StringBuilder();
@@ -574,14 +539,9 @@ namespace NethysBot.Services
 
 			embed.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
 			return embed.Build();
@@ -604,14 +564,16 @@ namespace NethysBot.Services
 				.WithTitle(c.Name + "'s Actions")
 				.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
+			}
+			else
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
 			}
 
 			var sb = new StringBuilder();
@@ -659,14 +621,9 @@ namespace NethysBot.Services
 
 			var embed = SRD.EmbedItem(i);
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var id = c.Owners[context.User.Id];
-				if (id.Color != null)
-				{
-					embed.WithColor(new Color(id.Color[0], id.Color[1], id.Color[2]));
-				}
-				if (!id.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(id.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
 			return embed.Build();
@@ -695,14 +652,16 @@ namespace NethysBot.Services
 				.AddField("Currency","CP "+cp+" | SP "+ sp+" | GP "+gp+" | PP "+pp)
 				.WithThumbnailUrl(c.ImageUrl);
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
+			}
+			else
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
 			}
 
 			if (json["data"]!=null && json["data"].HasValues)
@@ -744,14 +703,9 @@ namespace NethysBot.Services
 
 			var embed = SRD.EmbedSpell(s);
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
 
 			return embed.Build();
@@ -911,14 +865,16 @@ namespace NethysBot.Services
 				sb.Clear();
 			}
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
+			}
+			else
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
 			}
 
 			return embed.Build();
@@ -985,22 +941,18 @@ namespace NethysBot.Services
 				embed.AddField((string)x["name"] ?? "Unnamed Ability", ((string)x["body"]).NullorEmpty()? "No Description":x["body"]);
 			}
 
-			if (context != null && c.Owners.ContainsKey(context.User.Id))
+			if (c.Color != null)
 			{
-				var i = c.Owners[context.User.Id];
-				if (i.Color != null)
-				{
-					embed.WithColor(new Color(i.Color[0], i.Color[1], i.Color[2]));
-				}
-				else
-				{
-					Random randonGen = new Random();
-					Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
-					randonGen.Next(255));
-					embed.WithColor(randomColor);
-				}
-				if (!i.ImageUrl.NullorEmpty()) embed.WithThumbnailUrl(i.ImageUrl);
+				embed.WithColor(new Color(c.Color[0], c.Color[1], c.Color[2]));
 			}
+			else
+			{
+				Random randonGen = new Random();
+				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+				randonGen.Next(255));
+				embed.WithColor(randomColor);
+			}
+			
 			
 			return embed.Build();
 		}

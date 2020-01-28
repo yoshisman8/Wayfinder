@@ -253,5 +253,13 @@ namespace NethysBot.Helpers
 			{ Models.SheetType.Companion,"<:companion:669987675616313385>" },
 			{ Models.SheetType.Character, "<:character:669987675142357032>" }
 		};
+		public static Dictionary<string, string> Strike { get; set; } = new Dictionary<string, string>()
+		{
+			{"","<:custom:671802295260020786>" },
+			{"custom","<:custom:671802295260020786>" },
+			{"spell","<:spell:671803477193785365>" },
+			{"melee","<:melee:671802294911762484>" },
+			{"ranged","<:ranged:671802295138385930>" }
+		};
 	}
 }

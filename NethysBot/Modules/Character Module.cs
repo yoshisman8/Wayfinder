@@ -35,11 +35,11 @@ namespace NethysBot.Modules
 				switch (character.Type)
 				{
 					case Models.SheetType.Character:
-						user.Character = character.RemoteId;
+						user.Character = character;
 						await msg.ModifyAsync(x=>x.Content="The character `" + character.Name + "` (id `" + character.RemoteId + "`) has been successfully imported and has been assiged as your active character!");
 						break;
 					case Models.SheetType.Companion:
-						user.Companion = character.RemoteId;
+						user.Companion = character;
 						await msg.ModifyAsync(x=>x.Content= "The companion `" + character.Name + "` (id `" + character.RemoteId + "`) has been successfully imported and has been assiged as your active companion!");
 						break;
 				}
@@ -95,7 +95,7 @@ namespace NethysBot.Modules
 				{
 					var u = GetUser();
 					var c = chars.FirstOrDefault();
-					u.Character = c.RemoteId;
+					u.Character = c;
 					UpdateUser(u);
 
 					await ReplyAsync("Changed your active character to " + c.Name + ".", await SheetService.GetSheet(c, Context));
@@ -128,7 +128,7 @@ namespace NethysBot.Modules
 						{
 							var c = chars.ElementAt(index);
 							var u = GetUser();
-							u.Character = c.RemoteId;
+							u.Character = c;
 							UpdateUser(u);
 							await ReplyAsync("Changed your active character to " + c.Name + ".", await SheetService.GetSheet(c, Context));
 							return;
@@ -207,7 +207,7 @@ namespace NethysBot.Modules
 				{
 					var u = GetUser();
 					var c = chars.FirstOrDefault();
-					u.Character = c.RemoteId;
+					u.Character = c;
 					UpdateUser(u);
 
 					await ReplyAsync("Changed your active companion to " + c.Name + ".", await SheetService.GetSheet(c, Context));
@@ -240,7 +240,7 @@ namespace NethysBot.Modules
 						{
 							var c = chars.ElementAt(index);
 							var u = GetUser();
-							u.Companion = c.RemoteId;
+							u.Companion = c;
 							UpdateUser(u);
 							await ReplyAsync("Changed your active companion to " + c.Name + ".", await SheetService.GetSheet(c, Context));
 							return;
@@ -303,19 +303,18 @@ namespace NethysBot.Modules
 
 				var c = results.FirstOrDefault();
 
-				if(c.RemoteId == u.Character)
+				if(c.InternalId == u.Character.InternalId)
 				{
 					u.Character = null;
 					
 					UpdateUser(u);
 				}
-				if(c.RemoteId == u.Companion)
+				if(c.InternalId == u.Character.InternalId)
 				{
 					u.Companion = null;
 					UpdateUser(u);
 				}
-				c.Owners.Remove(Context.User.Id);
-				UpdateCharacter(c);
+				DeleteCharacter(c);
 				await ReplyAsync("Deleted character `" + c.Name + "`.");
 				return;
 			}
@@ -347,19 +346,18 @@ namespace NethysBot.Modules
 						var c = results.ElementAt(index);
 						var u = GetUser();
 
-						if (c.RemoteId == u.Character)
+						if (c.InternalId == u.Character.InternalId)
 						{
 							u.Character = null;
 
 							UpdateUser(u);
 						}
-						if (c.RemoteId == u.Companion)
+						if (c.InternalId == u.Companion.InternalId)
 						{
 							u.Companion = null;
 							UpdateUser(u);
 						}
-						c.Owners.Remove(Context.User.Id);
-						UpdateCharacter(c);
+						DeleteCharacter(c);
 						await ReplyAsync("Deleted character `" + c.Name + "`.");
 						return;
 					}
