@@ -7,29 +7,33 @@ using System.Net;
 using System.Linq;
 using Discord;
 using NethysBot.Helpers;
+using System.Security.Cryptography;
+using Antlr4.Runtime.Dfa;
 
 namespace NethysBot.Services
 {
-	public class SRD
+	public class FileManager
 	{
 		private string RemoteUrl = "http://character.pf2.tools/assets/json/all.json";
 		
-		public SRD()
+		public FileManager()
+		{
+			Reload();
+		}
+		public void Reload()
 		{
 			Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "data"));
 
-			if(!File.Exists(Path.Combine(Directory.GetCurrentDirectory(),"data" , "all.json")))
+			if (!File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "data", "all.json")))
 			{
 				WebClient Client = new WebClient();
-				
-				Client.DownloadFile(RemoteUrl, Path.Combine(Directory.GetCurrentDirectory(),"data","all.json"));
+
+				Client.DownloadFile(RemoteUrl, Path.Combine(Directory.GetCurrentDirectory(), "data", "all.json"));
 			}
-			string raw = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(),"data", "all.json"));
+			string raw = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "data", "all.json"));
 
 			var tokens = JArray.Parse(raw);
 
-			//var tokens = json[0];
-			
 			Feats = from f in tokens where (string)f["type"] == "feat" select f;
 			Actions = from a in tokens where (string)a["type"] == "action" select a;
 			Items = from I in tokens
@@ -37,7 +41,7 @@ namespace NethysBot.Services
 						(string)I["type"] == "armor" ||
 						(string)I["type"] == "shield" ||
 						(string)I["type"] == "weapon"
-					 select I;
+					select I;
 			Features = from f in tokens where (string)f["type"] == "feature" select f;
 			Traits = from t in tokens where (string)t["type"] == "trait" select t;
 			Spells = from s in tokens
@@ -46,8 +50,14 @@ namespace NethysBot.Services
 						 (string)s["type"] == "focus"
 					 select s;
 			Backgrounds = from b in tokens where (string)b["type"] == "background" select b;
-		}
 
+			if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "data", "help.json")))
+			{
+				Commands = JArray.Parse(File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "data", "help.json")));
+
+				Categories = Commands.Select(x => (string)x["Category"]).Distinct();
+			}
+		}
 		public IEnumerable<JToken> Feats { get; set; }
 		public IEnumerable<JToken> Actions { get; set; }
 		public IEnumerable<JToken> Items { get; set; } // Includes types "item", "armor", "shield" and "weapon"
@@ -56,6 +66,10 @@ namespace NethysBot.Services
 		public IEnumerable<JToken> Traits { get; set; }
 		public IEnumerable<JToken> Backgrounds { get; set; }
 		public enum Types { Actions, Feats, Features, Items, Spells, Traits, Backgrounds }
+
+		public IEnumerable<string> Categories { get; set; }
+		public JArray Commands { get; set; }
+
 
 		public EmbedBuilder EmbedFeat(JToken feat)
 		{
@@ -206,9 +220,25 @@ namespace NethysBot.Services
 
 			string type = s["cantrip"] != null ? "Cantrip" : ((string)s["type"]).Uppercase() + " " + (s["level"] ?? 0);
 
-			string comps = s["cast"] != null ? string.Join(", ", s["cast"]).ToUpper() : "";
+			string comps;
+			if(s["casts"].Type == JTokenType.Array)
+			{
+				comps = s["cast"] != null ? string.Join(", ", s["cast"]).ToUpper() : "";
+			}
+			else
+			{
+				comps = (string)s["cast"];
+			}
 
-			string traditions = s["traditions"] != null ? string.Join(", ", s["traditions"]).Uppercase() : "-";
+			string traditions;
+			if (s["traditions"].Type == JTokenType.Array)
+			{
+				traditions = s["traditions"] != null ? string.Join(", ", s["traditions"]).Uppercase() : "-";
+			}
+			else
+			{
+				traditions = (string)s["traditions"];
+			}
 
 			var embed = new EmbedBuilder()
 				.WithTitle(((string)s["name"] ?? "Unammed Spell") + " (" + type + ")")
@@ -231,6 +261,79 @@ namespace NethysBot.Services
 				embed.WithFooter((string)s["src"]);
 				embed.WithUrl((string)s["src"]);
 			}
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
+			return embed;
+		}
+		public EmbedBuilder EmbedTrait(JToken t)
+		{
+			var embed = new EmbedBuilder()
+				.WithTitle((string)t["name"])
+				.WithDescription((string)t["body"])
+				.WithUrl((string)t["src"]);
+
+
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
+			return embed;
+		}
+		public EmbedBuilder EmbedItemSRD(JToken i)
+		{
+			var embed = new EmbedBuilder()
+				.WithTitle((string)i["name"] +" lv" +(string)i["level"]);
+			if (i["traits"] != null) embed.AddField("Traits", (string)i["traits"],true);
+			if (i["price"] != null) embed.AddField("Price", (string)i["price"] + (string)i["priceunit"], true);
+			if (i["bulk"] != null) embed.AddField("Bulk", (string)i["bulk"], true);
+			if (i["hands"] != null) embed.AddField("Hands", (string)i["hands"], true);
+
+
+
+			embed.AddField("Description", (string)i["body"]);
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
+			return embed;
+		}
+		public EmbedBuilder EmbedWeapon(JToken w)
+		{
+			var embed = new EmbedBuilder()
+				.WithTitle((string)w["name"]);
+			if (w["group"] != null) embed.AddField("Group", (string)w["group"], true);
+			if (w["traits"] != null) embed.AddField("Traits", (string)w["traits"], true);
+			if (w["price"] != null) embed.AddField("Price", (string)w["price"] + (string)w["priceunit"], true);
+			if (w["bulk"] != null) embed.AddField("Bulk", (string)w["bulk"], true);
+			if (w["hands"] != null) embed.AddField("Hands", (string)w["hands"], true);
+			if (w["damagedie"] != null && w["damagetype"] != null) embed.AddField("Damage", "1" + (string)w["damagedie"] + " " + w["damagetype"], true);
+			if (!((string)w["damage"]).NullorEmpty()) embed.AddField("Damage", w["damage"],true);
+
+
+			embed.AddField("Description", (string)w["body"]);
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
+			return embed;
+		}
+		public EmbedBuilder EmbedArmor(JToken a)
+		{
+			var embed = new EmbedBuilder()
+				.WithTitle((string)a["name"]);
+			if (a["category"] != null) embed.AddField("Category", (string)a["category"], true);
+			if (a["traits"] != null) embed.AddField("Traits", (string)a["traits"], true);
+			if (a["price"] != null) embed.AddField("Price", (string)a["price"] + (string)a["priceunit"], true);
+			if (a["bulk"] != null) embed.AddField("Bulk", (string)a["bulk"], true);
+			if (a["acbonus"] != null) embed.AddField("Armor Bonus", (string)a["acbonus"], true);
+			if (a["dexcap"] != null) embed.AddField("Maximum Dexterity Bonus", a["dexcap"], true);
+			if (a["checkpenalty"] != null) embed.AddField("Armor Check Penalty", (string)a["checkpenalty"],true);
+			if (a["strength"] != null) embed.AddField("Strength Requirement", a["strength"], true);
+
+
+			embed.AddField("Description", (string)a["body"]);
 			Random randonGen = new Random();
 			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
 			randonGen.Next(255));

@@ -27,12 +27,12 @@ namespace NethysBot.Services
 		private LiteCollection<Character> collection;
 		private HttpClient Client;
 		private string Api = "http://character.pf2.tools/api/characters/";
-		private SRD SRD;
-		public SheetService(LiteDatabase database, SRD _srd)
+		private FileManager FileManager;
+		public SheetService(LiteDatabase database, FileManager _srd)
 		{
 			Client = new HttpClient();
 			collection = database.GetCollection<Character>("Characters");
-			SRD = _srd;
+			FileManager = _srd;
 		}
 
 		/// <summary>
@@ -391,7 +391,7 @@ namespace NethysBot.Services
 
 			var feat = feats.First();
 
-			var embed = SRD.EmbedFeat(feat);
+			var embed = FileManager.EmbedFeat(feat);
 
 			embed.WithThumbnailUrl(c.ImageUrl);
 
@@ -466,7 +466,7 @@ namespace NethysBot.Services
 
 			var f = features.First();
 
-			var embed = SRD.EmbedFeature(f);
+			var embed = FileManager.EmbedFeature(f);
 
 			embed.WithThumbnailUrl(c.ImageUrl);
 
@@ -535,7 +535,7 @@ namespace NethysBot.Services
 
 			var f = features.First();
 
-			var embed = SRD.EmbedAction(f);
+			var embed = FileManager.EmbedAction(f);
 
 			embed.WithThumbnailUrl(c.ImageUrl);
 
@@ -619,7 +619,7 @@ namespace NethysBot.Services
 
 			var i = items.FirstOrDefault();
 
-			var embed = SRD.EmbedItem(i);
+			var embed = FileManager.EmbedItem(i);
 
 			if (c.Color != null)
 			{
@@ -701,7 +701,7 @@ namespace NethysBot.Services
 
 			var s = spells.FirstOrDefault();
 
-			var embed = SRD.EmbedSpell(s);
+			var embed = FileManager.EmbedSpell(s);
 
 			if (c.Color != null)
 			{

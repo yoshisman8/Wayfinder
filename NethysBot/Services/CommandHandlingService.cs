@@ -117,13 +117,7 @@ namespace NethysBot.Services
 
 			if (result.Error.HasValue)
 			{
-				switch (result.Error.Value)
-				{
-					case CommandError.Exception:
-						var crashlogger = _discord.GetGuild(377155313557831690).GetTextChannel(546409000644640776);
-						await crashlogger.SendMessageAsync("Exception Occured while executing a command.\n"+result.ErrorReason);
-						break;
-				}
+				
 			}
 		}
 	}
