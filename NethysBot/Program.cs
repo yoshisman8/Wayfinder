@@ -33,6 +33,7 @@ namespace NethysBot
 
 			await _client.LoginAsync(TokenType.Bot, _config["token"]);
 			await _client.StartAsync();
+			await _client.SetGameAsync("Pathfinder 2e | !Help");
 
 			await Task.Delay(-1);
 		}
