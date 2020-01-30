@@ -28,7 +28,7 @@ namespace NethysBot.Modules
 					results = FileManager.Feats.Where(x => ((string)x["name"]).ToLower().StartsWith(Query.ToLower()));
 					break;
 				case Category.Item:
-					results = FileManager.Features.Where(x => ((string)x["name"]).ToLower().StartsWith(Query.ToLower()));
+					results = FileManager.Items.Where(x => ((string)x["name"]).ToLower().StartsWith(Query.ToLower()));
 					break;
 				case Category.Spell:
 					results = FileManager.Spells.Where(x => ((string)x["name"]).ToLower().StartsWith(Query.ToLower()));
@@ -55,7 +55,7 @@ namespace NethysBot.Modules
 
 				for (int i = 0; i < results.Count(); i++)
 				{
-					sb.AppendLine("`[" + i + "]` " + results.ToArray()[i]["Name"]);
+					sb.AppendLine("`[" + i + "]` " + names.ElementAt(i));
 				}
 				var msg = await ReplyAsync(sb.ToString());
 				var reply = await NextMessageAsync(true, true, TimeSpan.FromSeconds(10));
@@ -73,6 +73,7 @@ namespace NethysBot.Modules
 					}
 					else
 					{
+						await reply.DeleteAsync();
 						Embed embed = null;
 						switch (category)
 						{
@@ -83,7 +84,21 @@ namespace NethysBot.Modules
 								embed = FileManager.EmbedFeat(results.ElementAt(index)).Build();
 								break;
 							case Category.Item:
-								embed = FileManager.EmbedItem(results.ElementAt(index)).Build();
+								switch ((string)results.ElementAt(index)["type"])
+								{
+									case "item":
+										embed = FileManager.EmbedItemSRD(results.ElementAt(index)).Build();
+										break;
+									case "weapon":
+										embed = FileManager.EmbedWeapon(results.ElementAt(index)).Build();
+										break;
+									case "armor":
+										embed = FileManager.EmbedArmor(results.ElementAt(index)).Build();
+										break;
+									case "shield":
+										embed = FileManager.EmbedShield(results.ElementAt(index)).Build();
+										break;
+								}
 								break;
 							case Category.Spell:
 								embed = FileManager.EmbedSpell(results.ElementAt(index)).Build();
@@ -95,9 +110,53 @@ namespace NethysBot.Modules
 								embed = FileManager.EmbedAction(results.ElementAt(index)).Build();
 								break;
 						}
+
+						await ReplyAsync("", embed);
 						return;
 					}
 				}
+			}
+			else
+			{
+				Embed embed = null;
+				switch (category)
+				{
+					case Category.Action:
+						embed = FileManager.EmbedAction(results.FirstOrDefault()).Build();
+						break;
+					case Category.Feat:
+						embed = FileManager.EmbedFeat(results.FirstOrDefault()).Build();
+						break;
+					case Category.Item:
+						switch ((string)results.FirstOrDefault()["type"])
+						{
+							case "item":
+								embed = FileManager.EmbedItemSRD(results.FirstOrDefault()).Build();
+								break;
+							case "weapon":
+								embed = FileManager.EmbedWeapon(results.FirstOrDefault()).Build();
+								break;
+							case "armor":
+								embed = FileManager.EmbedArmor(results.FirstOrDefault()).Build();
+								break;
+							case "shield":
+								embed = FileManager.EmbedShield(results.FirstOrDefault()).Build();
+								break;
+						}
+						break;
+					case Category.Spell:
+						embed = FileManager.EmbedSpell(results.FirstOrDefault()).Build();
+						break;
+					case Category.Trait:
+						embed = FileManager.EmbedAction(results.FirstOrDefault()).Build();
+						break;
+					case Category.Background:
+						embed = FileManager.EmbedAction(results.FirstOrDefault()).Build();
+						break;
+				}
+
+				await ReplyAsync("", embed);
+				return;
 			}
 		}
 	}

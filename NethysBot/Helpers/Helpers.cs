@@ -112,7 +112,11 @@ namespace NethysBot.Helpers
 				return char.ToUpper(text[0]) + text.Substring(1);
 			}
 		}
-
+		public static IEnumerable<string> Split(this string str, int maxChunkSize)
+		{
+			for (int i = 0; i < str.Length; i += maxChunkSize)
+				yield return str.Substring(i, Math.Min(maxChunkSize, str.Length - i));
+		}
 		public static string ToPlacement(this int number)
 		{
 			int n = Math.Abs(number);

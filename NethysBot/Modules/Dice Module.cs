@@ -508,6 +508,11 @@ namespace NethysBot.Modules
 
 				if ((string)s["attack"] == "spell")
 				{
+					if (!values.ContainsKey("ranged " + (string)s["name"]))
+					{
+						await ReplyAsync("Sorry! It seems we cannot retrieve the data for this strike! This issue is outside of the bot's control and will likely be solved later.");
+						return;
+					}
 					hit = (string)values["ranged " + (string)s["name"]]["bonus"];
 					dmg = (string)s["overridedamage"];
 					if (!dmg.NullorEmpty() && AttributeRegex.IsMatch(dmg))
@@ -562,7 +567,7 @@ namespace NethysBot.Modules
 						dmgtype = "Bludgeoning";
 					}
 
-					if ((string)s["attack"] == "melee")
+					if ((string)s["attack"] == "melee" || ((string)s["attack"]).NullorEmpty())
 					{
 						hit = (string)values["melee " + (string)s["name"]]["bonus"];
 						bonus += ((int)values["strength"]["value"]).PrintModifier();
@@ -574,7 +579,7 @@ namespace NethysBot.Modules
 					
 					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
 
-					bonus += (int)s["moddamage"] > 0 ? ((int)s["moddamage"]).ToModifierString() : "";
+					bonus += !((string)s["moddamage"]).NullorEmpty() && (int)s["moddamage"] > 0 ? ((int)s["moddamage"]).ToModifierString() : "";
 
 					string summary = "";
 

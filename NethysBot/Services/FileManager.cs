@@ -221,7 +221,7 @@ namespace NethysBot.Services
 			string type = s["cantrip"] != null ? "Cantrip" : ((string)s["type"]).Uppercase() + " " + (s["level"] ?? 0);
 
 			string comps;
-			if(s["casts"].Type == JTokenType.Array)
+			if(s["cast"].Type == JTokenType.Array)
 			{
 				comps = s["cast"] != null ? string.Join(", ", s["cast"]).ToUpper() : "";
 			}
@@ -231,7 +231,7 @@ namespace NethysBot.Services
 			}
 
 			string traditions;
-			if (s["traditions"].Type == JTokenType.Array)
+			if (s["traditions"]!= null && s["traditions"].Type == JTokenType.Array)
 			{
 				traditions = s["traditions"] != null ? string.Join(", ", s["traditions"]).Uppercase() : "-";
 			}
@@ -243,18 +243,30 @@ namespace NethysBot.Services
 			var embed = new EmbedBuilder()
 				.WithTitle(((string)s["name"] ?? "Unammed Spell") + " (" + type + ")")
 				.AddField("Traits", s["traits"] ?? "No Traits", true)
-				.AddField("Cast", act + " " + comps, true)
-				.AddField("Traditions", traditions, true);
-
+				.AddField("Cast", act + " " + comps, true);
+			if (!traditions.NullorEmpty()) embed.AddField("Traditions", traditions, true);
 			var sb = new StringBuilder();
 			if (s["range"] != null) sb.AppendLine("**Range** " + s["range"]);
 			// if (s["area"] != null) sb.AppendLine("**Area** " + s["area"]);
 			// if (s["targets"] != null) sb.AppendLine("**Targets** " + s["targets"]);
 			if (s["savingthrow"] != null) sb.AppendLine("**Saving Throw**" + ((string)s["savingthrow"]).Uppercase() + (s["basic"] != null ? " (Basic)" : ""));
-
+			if (s["cost"] != null) embed.AddField("Cost", (string)s["cost"],true);
+			if (s["primarycheck"] != null) embed.AddField("Primary Check", (string)s["primarycheck"], true);
 
 			sb.AppendLine((string)s["body"] ?? "No Description");
-			embed.AddField("Description", sb.ToString());
+
+			if(sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for(int i = 0; i < segments.Length; i++)
+				{
+					embed.AddField("Description (" + (i + 1) + "/" + (segments.Length) + ")", segments[i]);
+				}
+			}
 
 			if (s["src"] != null)
 			{
@@ -334,6 +346,26 @@ namespace NethysBot.Services
 
 
 			embed.AddField("Description", (string)a["body"]);
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
+			return embed;
+		}
+		public EmbedBuilder EmbedShield(JToken s)
+		{
+			var embed = new EmbedBuilder()
+				.WithTitle((string)s["name"]);
+			if (s["traits"] != null) embed.AddField("Traits", (string)s["traits"], true);
+			if (s["price"] != null) embed.AddField("Price", (string)s["price"] + (string)s["priceunit"], true);
+			if (s["bulk"] != null) embed.AddField("Bulk", (string)s["bulk"], true);
+			if (s["acbonus"] != null) embed.AddField("Shield Bonus", (string)s["acbonus"], true);
+			if (s["hardness"] != null) embed.AddField("Hardness", s["dexcap"], true);
+			if (s["hp"] != null) embed.AddField("Health", s["hp"], true);
+			if (s["hp(bt)"] != null) embed.AddField("Broken Threshold", ((string)s["hp(bt)"]).Replace((string)s["hp"],"").Replace("(","").Replace(")",""), true);
+
+
+			embed.AddField("Description", (string)s["body"]);
 			Random randonGen = new Random();
 			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
 			randonGen.Next(255));
