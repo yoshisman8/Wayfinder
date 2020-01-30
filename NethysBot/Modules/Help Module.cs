@@ -73,6 +73,8 @@ namespace NethysBot.Modules
 							embed.AddField(n, (string)e[n]);
 						}
 					}
+
+					embed.AddField("Symbology","`[Argument]` means it is a mandatory argument.\n`<Argument>` means it's an optional argument.")
 					var DMs = await Context.User.GetOrCreateDMChannelAsync();
 					if (Context.Guild != null)
 					{
