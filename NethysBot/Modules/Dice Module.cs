@@ -102,6 +102,7 @@ namespace NethysBot.Modules
 			
 			if(Skill.ToLower() == "perception")
 			{
+				var embed = new EmbedBuilder();
 				JToken bonus;
 				string message = "";
 				if (args.Contains("-f"))
@@ -114,17 +115,18 @@ namespace NethysBot.Modules
 					bonus = values["famperception "+c.Familiar]["bonus"] ?? 0;
 					arguments = arguments.Replace("-f", "");
 					message = c.Name + "'s familiar makes a Preception check!";
+					embed.WithThumbnailUrl(c.FamImg);
 				}
 				else
 				{
 					bonus = values["perception"]["bonus"] ?? 0;
 					message = c.Name + " makes a Preception check!";
+					embed.WithThumbnailUrl(c.ImageUrl);
 				}
 				var result = Roller.Roll("d20 + " + bonus + arguments);
 
-				var embed = new EmbedBuilder()
-					.WithTitle(message)
-					.WithThumbnailUrl(c.ImageUrl)
+				
+				embed.WithTitle(message)
 					.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
 					.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString())); ;
 				Random randonGen = new Random();
@@ -168,7 +170,7 @@ namespace NethysBot.Modules
 							break;
 					}
 					arguments = arguments.Replace("-f", "");
-					embed.WithImageUrl(c.FamImg);
+					embed.WithThumbnailUrl(c.FamImg);
 				}
 				else
 				{
