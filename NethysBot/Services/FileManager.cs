@@ -105,6 +105,23 @@ namespace NethysBot.Services
 				.AddField("Type", ((string)f["type"] ?? "Feature") + " " + f["level"])
 				.AddField("Description", body);
 
+			var sb = new StringBuilder();
+			sb.AppendLine((string)f["body"] ?? "No Description");
+
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int i = 0; i < segments.Length; i++)
+				{
+					embed.AddField("Description (" + (i + 1) + "/" + (segments.Length) + ")", segments[i]);
+				}
+			}
+
+
 			if (f["src"] != null)
 			{
 				embed.WithFooter((string)f["src"]);
@@ -126,8 +143,24 @@ namespace NethysBot.Services
 				.Replace("(r)", Icons.Actions["r"]);
 
 			var embed = new EmbedBuilder()
-				.WithTitle((string)f["name"] ?? "Unammed Activity")
-				.AddField("Description", body);
+				.WithTitle((string)f["name"] ?? "Unammed Activity");
+
+			var sb = new StringBuilder();
+			sb.AppendLine((string)f["body"] ?? "No Description");
+
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int i = 0; i < segments.Length; i++)
+				{
+					embed.AddField("Description (" + (i + 1) + "/" + (segments.Length) + ")", segments[i]);
+				}
+			}
+
 
 			var act = (string)f["actions"];
 
@@ -189,7 +222,21 @@ namespace NethysBot.Services
 				.Replace("(f)", Icons.Actions["0"])
 				.Replace("(r)", Icons.Actions["r"]);
 
-			embed.AddField("Description", body);
+			var sb = new StringBuilder();
+			sb.AppendLine((string)i["body"] ?? "No Description");
+
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int d = 0; d < segments.Length; d++)
+				{
+					embed.AddField("Description (" + (d + 1) + "/" + (segments.Length) + ")", segments[d]);
+				}
+			}
 
 			if (i["src"] != null)
 			{
@@ -283,9 +330,23 @@ namespace NethysBot.Services
 		{
 			var embed = new EmbedBuilder()
 				.WithTitle((string)t["name"])
-				.WithDescription((string)t["body"])
 				.WithUrl((string)t["src"]);
 
+			var sb = new StringBuilder();
+			sb.AppendLine((string)t["body"] ?? "No Description");
+
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int d = 0; d < segments.Length; d++)
+				{
+					embed.AddField("Description (" + (d + 1) + "/" + (segments.Length) + ")", segments[d]);
+				}
+			}
 
 			Random randonGen = new Random();
 			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
@@ -303,8 +364,22 @@ namespace NethysBot.Services
 			if (i["hands"] != null) embed.AddField("Hands", (string)i["hands"], true);
 
 
+			var sb = new StringBuilder();
+			sb.AppendLine((string)i["body"] ?? "No Description");
 
-			embed.AddField("Description", (string)i["body"]);
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int d = 0; d < segments.Length; d++)
+				{
+					embed.AddField("Description (" + (d + 1) + "/" + (segments.Length) + ")", segments[d]);
+				}
+			}
+
 			Random randonGen = new Random();
 			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
 			randonGen.Next(255));
@@ -323,8 +398,22 @@ namespace NethysBot.Services
 			if (w["damagedie"] != null && w["damagetype"] != null) embed.AddField("Damage", "1" + (string)w["damagedie"] + " " + w["damagetype"], true);
 			if (!((string)w["damage"]).NullorEmpty()) embed.AddField("Damage", w["damage"],true);
 
+			var sb = new StringBuilder();
+			sb.AppendLine((string)w["body"] ?? "No Description");
 
-			embed.AddField("Description", (string)w["body"]);
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int d = 0; d < segments.Length; d++)
+				{
+					embed.AddField("Description (" + (d + 1) + "/" + (segments.Length) + ")", segments[d]);
+				}
+			}
+
 			Random randonGen = new Random();
 			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
 			randonGen.Next(255));
@@ -344,8 +433,22 @@ namespace NethysBot.Services
 			if (a["checkpenalty"] != null) embed.AddField("Armor Check Penalty", (string)a["checkpenalty"],true);
 			if (a["strength"] != null) embed.AddField("Strength Requirement", a["strength"], true);
 
+			var sb = new StringBuilder();
+			sb.AppendLine((string)a["body"] ?? "No Description");
 
-			embed.AddField("Description", (string)a["body"]);
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int d = 0; d < segments.Length; d++)
+				{
+					embed.AddField("Description (" + (d + 1) + "/" + (segments.Length) + ")", segments[d]);
+				}
+			}
+
 			Random randonGen = new Random();
 			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
 			randonGen.Next(255));
@@ -364,8 +467,21 @@ namespace NethysBot.Services
 			if (s["hp"] != null) embed.AddField("Health", s["hp"], true);
 			if (s["hp(bt)"] != null) embed.AddField("Broken Threshold", ((string)s["hp(bt)"]).Replace((string)s["hp"],"").Replace("(","").Replace(")",""), true);
 
+			var sb = new StringBuilder();
+			sb.AppendLine((string)s["body"] ?? "No Description");
 
-			embed.AddField("Description", (string)s["body"]);
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int d = 0; d < segments.Length; d++)
+				{
+					embed.AddField("Description (" + (d + 1) + "/" + (segments.Length) + ")", segments[d]);
+				}
+			}
 			Random randonGen = new Random();
 			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
 			randonGen.Next(255));
