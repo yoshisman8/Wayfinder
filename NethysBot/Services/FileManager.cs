@@ -83,8 +83,23 @@ namespace NethysBot.Services
 			var embed = new EmbedBuilder()
 				.WithTitle((string)feat["name"] ?? "Unammed Feat")
 				.AddField("Traits", feat["traits"] ?? "N/A", true)
-				.AddField("Type", ((string)feat["subtype"] ?? "Feat").Uppercase() + " " + feat["level"], true)
-				.AddField("Description", body);
+				.AddField("Type", ((string)feat["subtype"] ?? "Feat").Uppercase() + " " + feat["level"], true);
+
+			var sb = new StringBuilder();
+			sb.AppendLine((string)feat["body"] ?? "No Description");
+
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int i = 0; i < segments.Length; i++)
+				{
+					embed.AddField("Description (" + (i + 1) + "/" + (segments.Length) + ")", segments[i]);
+				}
+			}
 			Random randonGen = new Random();
 			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
 			randonGen.Next(255));
@@ -102,8 +117,7 @@ namespace NethysBot.Services
 
 			var embed = new EmbedBuilder()
 				.WithTitle((string)f["name"] ?? "Unammed Feature")
-				.AddField("Type", ((string)f["type"] ?? "Feature") + " " + f["level"])
-				.AddField("Description", body);
+				.AddField("Type", ((string)f["type"] ?? "Feature") + " " + f["level"]);
 
 			var sb = new StringBuilder();
 			sb.AppendLine((string)f["body"] ?? "No Description");
@@ -223,7 +237,7 @@ namespace NethysBot.Services
 				.Replace("(r)", Icons.Actions["r"]);
 
 			var sb = new StringBuilder();
-			sb.AppendLine((string)i["body"] ?? "No Description");
+			sb.AppendLine(body ?? "No Description");
 
 			if (sb.Length <= 1024)
 			{
