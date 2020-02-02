@@ -101,9 +101,12 @@ namespace NethysBot.Services
 				}
 
 			}
-			if (json["data"]["familiars"].HasValues && !((string)json["familiars"]["data"][0]["name"]).NullorEmpty())
+
+			var familiar = json["data"]["familiars"][0];
+
+			if (familiar["name"]!= null)
 			{
-				character.Familiar = (string)json["data"]["familiars"][0]["name"] ?? "Unnamed Familiar";
+				character.Familiar = (string)familiar["name"];
 			}
 			else
 			{
@@ -162,16 +165,18 @@ namespace NethysBot.Services
 				}
 			}
 
-			if (json["data"]["familiars"].HasValues && !((string)json["familiars"]["data"][0]["name"]).NullorEmpty())
+			var familiar = json["data"]["familiars"][0];
+
+			if (familiar["name"] != null)
 			{
-				character.Familiar = (string)json["data"]["familiars"][0]["name"] ?? "Unnamed Familiar";
+				character.Familiar = (string)familiar["name"];
 			}
 			else
 			{
 				character.Familiar = null;
 			}
 
-			if(json["values"] != null && json["values"].HasValues)
+			if (json["values"] != null && json["values"].HasValues)
 			{
 				character.Values = json["values"].ToString();
 				character.ValuesLastUpdated = DateTime.Now;
