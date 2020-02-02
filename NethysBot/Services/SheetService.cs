@@ -101,9 +101,9 @@ namespace NethysBot.Services
 				}
 
 			}
-			if (json["familiars"].HasValues && !((string)json["familiars"][0]["name"]).NullorEmpty())
+			if (json["data"]["familiars"].HasValues && !((string)json["familiars"]["data"][0]["name"]).NullorEmpty())
 			{
-				character.Familiar = (string)json["familiars"][0]["name"] ?? "Unnamed Familiar";
+				character.Familiar = (string)json["data"]["familiars"][0]["name"] ?? "Unnamed Familiar";
 			}
 			else
 			{
@@ -162,9 +162,9 @@ namespace NethysBot.Services
 				}
 			}
 
-			if (json["familiars"].HasValues && !((string)json["familiars"][0]["name"]).NullorEmpty())
+			if (json["data"]["familiars"].HasValues && !((string)json["familiars"]["data"][0]["name"]).NullorEmpty())
 			{
-				character.Familiar = (string)json["familiars"][0]["name"] ?? "Unnamed Familiar";
+				character.Familiar = (string)json["data"]["familiars"][0]["name"] ?? "Unnamed Familiar";
 			}
 			else
 			{
