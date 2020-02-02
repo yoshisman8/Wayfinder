@@ -142,6 +142,7 @@ namespace NethysBot.Modules
 			}
 			else
 			{
+				var embed = new EmbedBuilder();
 				JToken bonus;
 				string message = "";
 				if (args.Contains("-f"))
@@ -167,6 +168,7 @@ namespace NethysBot.Modules
 							break;
 					}
 					arguments = arguments.Replace("-f", "");
+					embed.WithImageUrl(c.FamImg);
 				}
 				else
 				{
@@ -186,13 +188,13 @@ namespace NethysBot.Modules
 					string name = (string)s["lore"] ?? (string)s["name"];
 					message = c.Name + " makes " + (name.StartsWithVowel() ? "an " : "a ") + name.Uppercase() + " check!";
 					bonus = values[name.ToLower()]["bonus"] ?? 0;
+					embed.WithThumbnailUrl(c.ImageUrl);
 				}
 
 				var result = Roller.Roll("d20 + " + bonus + arguments);
 
-				var embed = new EmbedBuilder()
-					.WithTitle(message)
-					.WithThumbnailUrl(c.ImageUrl)
+				
+				embed.WithTitle(message)
 					.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
 					.WithFooter((c.ValuesLastUpdated.Outdated()? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
 				
@@ -246,7 +248,7 @@ namespace NethysBot.Modules
 				await ReplyAsync("", err.Build());
 				return;
 			}
-
+			var embed = new EmbedBuilder();
 			JToken bonus = null;
 			string message = "";
 			if (args.Contains("-f"))
@@ -272,6 +274,7 @@ namespace NethysBot.Modules
 						break;
 				}
 				arguments = arguments.Replace("-f", "");
+				embed.WithThumbnailUrl(c.FamImg);
 			}
 			else
 			{
@@ -290,13 +293,12 @@ namespace NethysBot.Modules
 						message = c.Name + " makes a will check!";
 						break;
 				}
+				embed.WithThumbnailUrl(c.ImageUrl);
 			}
 
 			var result = Roller.Roll("d20 + " + bonus + arguments);
 
-			var embed = new EmbedBuilder()
-				.WithTitle(message)
-				.WithThumbnailUrl(c.ImageUrl)
+			embed.WithTitle(message)
 				.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
 				.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
 
