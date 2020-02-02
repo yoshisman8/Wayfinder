@@ -106,7 +106,12 @@ namespace NethysBot.Modules
 				string message = "";
 				if (args.Contains("-f"))
 				{
-					bonus = values["famperception"]["bonus"] ?? 0;
+					if (c.Familiar.NullorEmpty())
+					{
+						await ReplyAsync("You have no named familiars.");
+						return;
+					}
+					bonus = values["famperception "+c.Familiar]["bonus"] ?? 0;
 					arguments = arguments.Replace("-f", "");
 					message = c.Name + "'s familiar makes a Preception check!";
 				}
@@ -141,18 +146,23 @@ namespace NethysBot.Modules
 				string message = "";
 				if (args.Contains("-f"))
 				{
+					if (c.Familiar.NullorEmpty())
+					{
+						await ReplyAsync("You have no named familiars.");
+						return;
+					}
 					switch (Skill.ToLower())
 					{
 						case "acrobatics":
-							bonus = values["famacrobatics"]["bonus"] ?? 0;
+							bonus = values["famacrobatics " + c.Familiar]["bonus"] ?? 0;
 							message = c.Name + "'s familiar makes an Acrobatics check!";
 							break;
 						case "stealth":
-							bonus = values["famstealth"]["bonus"] ?? 0;
+							bonus = values["famstealth " + c.Familiar]["bonus"] ?? 0;
 							message = c.Name + "'s familiar makes a Stealth check!";
 							break;
 						default:
-							bonus = values["famother"]["bonus"] ?? 0;
+							bonus = values["famother " + c.Familiar]["bonus"] ?? 0;
 							message = c.Name + "'s familiar makes a skill check!";
 							break;
 					}
@@ -241,18 +251,23 @@ namespace NethysBot.Modules
 			string message = "";
 			if (args.Contains("-f"))
 			{
+				if (c.Familiar.NullorEmpty())
+				{
+					await ReplyAsync("You have no named familiars.");
+					return;
+				}
 				switch ((int)Throw)
 				{
 					case 1:
-						bonus = values["famfort"]["bonus"] ?? 0;
+						bonus = values["famfort " + c.Familiar]["bonus"] ?? 0;
 						message = c.Name + "'s familiar makes a fortitude check!";
 						break;
 					case 2:
-						bonus = values["famref"]["bonus"] ?? 0;
+						bonus = values["famref " + c.Familiar]["bonus"] ?? 0;
 						message = c.Name + "'s familiar makes a reflex check!";
 						break;
 					case 3:
-						bonus = values["famwill"]["bonus"] ?? 0;
+						bonus = values["famwill " + c.Familiar]["bonus"] ?? 0;
 						message = c.Name + "'s familiar makes a will check!";
 						break;
 				}

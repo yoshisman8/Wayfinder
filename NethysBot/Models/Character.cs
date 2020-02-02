@@ -46,6 +46,7 @@ namespace NethysBot.Models
 		/// Url of the character's familiar
 		/// </summary>
 		public string FamImg { get; set; }
+		public string Familiar { get; set; } 
 		public int[] Color { get; set; } = null;
 
 	}

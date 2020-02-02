@@ -81,9 +81,9 @@ namespace NethysBot.Services
 
 			var notes = json["data"]["customnotes"];
 
-			if (notes!=null	&& notes.HasValues)
+			if (notes != null && notes.HasValues)
 			{
-				foreach (var n in notes.Where(x=> (string)x["uiid"] == "character"))
+				foreach (var n in notes.Where(x => (string)x["uiid"] == "character"))
 				{
 					if (((string)n["body"]).IsImageUrl())
 					{
@@ -99,6 +99,15 @@ namespace NethysBot.Services
 						break;
 					}
 				}
+
+			}
+			if (json["familiars"].HasValues && !((string)json["familiars"][0]["name"]).NullorEmpty())
+			{
+				character.Familiar = (string)json["familiars"][0]["name"] ?? "Unnamed Familiar";
+			}
+			else
+			{
+				character.Familiar = null;
 			}
 
 			collection.Insert(character);
@@ -151,6 +160,15 @@ namespace NethysBot.Services
 						break;
 					}
 				}
+			}
+
+			if (json["familiars"].HasValues && !((string)json["familiars"][0]["name"]).NullorEmpty())
+			{
+				character.Familiar = (string)json["familiars"][0]["name"] ?? "Unnamed Familiar";
+			}
+			else
+			{
+				character.Familiar = null;
 			}
 
 			if(json["values"] != null && json["values"].HasValues)
@@ -906,32 +924,32 @@ namespace NethysBot.Services
 					.WithDescription("Seems like we cannot fetch " + c.Name + "'s values. This is due to the fact values are only updated when you open the sheet in pf2.tools. To fix this, click the link above to generate those values.")
 					.Build();
 			}
-
+			string name = (string)json["name"];
 			var embed = new EmbedBuilder()
-				.WithTitle((string)json["name"])
+				.WithTitle(name)
 				.WithThumbnailUrl(c.FamImg);
 			var sb = new StringBuilder();
 
 			sb.AppendLine(Icons.Sheet["hp"] + " HP `" + ((int)(values["famhp"]["bonus"] ?? 0) - (int)(json["damage"] ?? 0)) + "/" + (values["famhp"]["bonus"] ?? 0) + "`");
-			sb.AppendLine(Icons.Sheet["ac"] + " AC `" + (values["famac"]["value"] ?? "Unknown") + "`");
-			sb.AppendLine(Icons.Sheet["per"] + " Perception `" + ((int)(values["famperception"]["bonus"] ?? 0)).ToModifierString() + "`");
+			sb.AppendLine(Icons.Sheet["ac"] + " AC `" + (values["famac "+name]["value"] ?? "Unknown") + "`");
+			sb.AppendLine(Icons.Sheet["per"] + " Perception `" + ((int)(values["famperception " + name]["bonus"] ?? 0)).ToModifierString() + "`");
 			sb.AppendLine("Resistances: \n" + json["resist"]);
 
 			embed.AddField("Stats", sb.ToString(), true);
 			sb.Clear();
 
-			sb.AppendLine(Icons.Sheet["fort"] + " `" + ((int)(values?["famfort"]?["bonus"] ?? 0)).ToModifierString() + "`");
-			sb.AppendLine(Icons.Sheet["ref"] + " `" + ((int)(values?["famref"]?["bonus"] ?? 0)).ToModifierString() + "`");
-			sb.AppendLine(Icons.Sheet["will"] + " `" + ((int)(values?["famwill"]?["bonus"] ?? 0)).ToModifierString() + "`");
+			sb.AppendLine(Icons.Sheet["fort"] + " `" + ((int)(values?["famfort " + name]?["bonus"] ?? 0)).ToModifierString() + "`");
+			sb.AppendLine(Icons.Sheet["ref"] + " `" + ((int)(values?["famref " + name]?["bonus"] ?? 0)).ToModifierString() + "`");
+			sb.AppendLine(Icons.Sheet["will"] + " `" + ((int)(values?["famwill " + name]?["bonus"] ?? 0)).ToModifierString() + "`");
 			sb.AppendLine("Weakensses: \n" + json["weakness"]);
 
 			embed.AddField("Defenses", sb.ToString(), true);
 			sb.Clear();
 
-			sb.AppendLine("Acrobatics `" + ((int)values["famacrobatics"]["bonus"]).ToModifierString()+"`");
-			sb.AppendLine("Stealth `" + ((int)values["famstealth"]["bonus"]).ToModifierString() + "`");
-			sb.AppendLine("Stealth `" + ((int)values["famperception"]["bonus"]).ToModifierString() + "`");
-			sb.AppendLine("Other `" + ((int)values["famother"]["bonus"]).ToModifierString() + "`");
+			sb.AppendLine("Acrobatics `" + ((int)values["famacrobatics " + name]["bonus"]).ToModifierString()+"`");
+			sb.AppendLine("Stealth `" + ((int)values["famstealth " + name]["bonus"]).ToModifierString() + "`");
+			sb.AppendLine("Stealth `" + ((int)values["famperception " + name]["bonus"]).ToModifierString() + "`");
+			sb.AppendLine("Other `" + ((int)values["famother " + name]["bonus"]).ToModifierString() + "`");
 
 			embed.AddField("Skill Bonuses", sb.ToString(),true);
 			sb.Clear();

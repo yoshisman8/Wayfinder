@@ -73,7 +73,14 @@ namespace NethysBot.Modules
 					}
 					else
 					{
-						await reply.DeleteAsync();
+						try
+						{
+							await reply.DeleteAsync();
+						}
+						catch
+						{
+
+						}
 						Embed embed = null;
 						switch (category)
 						{
