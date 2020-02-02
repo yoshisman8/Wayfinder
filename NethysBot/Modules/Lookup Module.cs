@@ -17,7 +17,7 @@ namespace NethysBot.Modules
 		public async Task getfeat([Remainder] string Name = null)
 		{
 			Character c = null;
-			if (Name.ToLower().EndsWith("-c"))
+			if (!Name.NullorEmpty() && Name.ToLower().EndsWith("-c"))
 			{
 				Name = Name.Replace("-c", "");
 				c = GetCompanion();
@@ -66,7 +66,7 @@ namespace NethysBot.Modules
 		public async Task getfeature([Remainder] string Name = null)
 		{
 			Character c = null;
-			if (Name.ToLower().EndsWith("-c"))
+			if (!Name.NullorEmpty() && Name.ToLower().EndsWith("-c"))
 			{
 				Name = Name.Replace("-c", "");
 				c = GetCompanion();
@@ -115,7 +115,7 @@ namespace NethysBot.Modules
 		public async Task GetAction([Remainder] string Name = null)
 		{
 			Character c = null;
-			if (Name.ToLower().EndsWith("-c"))
+			if (!Name.NullorEmpty() && Name.ToLower().EndsWith("-c"))
 			{
 				Name = Name.Replace("-c", "");
 				c = GetCompanion();
@@ -164,7 +164,7 @@ namespace NethysBot.Modules
 		public async Task Inventory([Remainder] string Name = null)
 		{
 			Character c = null;
-			if (Name.ToLower().EndsWith("-c"))
+			if (!Name.NullorEmpty() && Name.ToLower().EndsWith("-c"))
 			{
 				Name = Name.Replace("-c", "");
 				c = GetCompanion();
