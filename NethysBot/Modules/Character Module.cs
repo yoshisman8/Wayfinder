@@ -98,7 +98,7 @@ namespace NethysBot.Modules
 					u.Character = c;
 					UpdateUser(u);
 
-					await ReplyAsync("Changed your active character to " + c.Name + ".", await SheetService.GetSheet(c, Context));
+					await ReplyAsync("Changed your active character to " + c.Name + ".");
 					return;
 				}
 				else
@@ -130,7 +130,7 @@ namespace NethysBot.Modules
 							var u = GetUser();
 							u.Character = c;
 							UpdateUser(u);
-							await ReplyAsync("Changed your active character to " + c.Name + ".", await SheetService.GetSheet(c, Context));
+							await ReplyAsync("Changed your active character to " + c.Name + ".");
 							return;
 						}
 					}
