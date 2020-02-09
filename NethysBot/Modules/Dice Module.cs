@@ -214,7 +214,7 @@ namespace NethysBot.Modules
 			}
 		}
 		[Command("Save"), Alias("sv")]
-		public async Task Save(Ability Throw, params string[] args)
+		public async Task Save(Saves Throw, params string[] args)
 		{
 			Character c;
 			if (args.Length >= 1 && args.Contains("-c"))
