@@ -61,7 +61,7 @@ namespace NethysBot.Modules
 
 		}
 		
-		[Command("Check"), Alias("C")]
+		[Command("Check"), Alias("C", "Skill","SkillCheck")]
 		public async Task SkillCheck(string Skill, params string[] args)
 		{
 			Character c;
