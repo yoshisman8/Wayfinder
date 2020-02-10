@@ -29,6 +29,7 @@ namespace NethysBot.Modules
 				
 				var embed = new EmbedBuilder()
 					.WithDescription("Wayfinder is a Pathfinder 2nd Edition utility bot designed to facilitate online play.\n"+
+					"You can view the wiki [here](https://github.com/yoshisman8/Wayfinder/wiki).\n" +
 					"This bot is meant to be used in conjuction of [character.pf2.tools](http://character.pf2.tools) as all sheets have to be imported from there.\n"+
 					"Invite Wayfinder to your server [here](https://discordapp.com/api/oauth2/authorize?client_id=663127829621506068&permissions=288832&scope=bot)!");
 

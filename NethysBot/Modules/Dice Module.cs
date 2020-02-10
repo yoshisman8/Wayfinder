@@ -61,7 +61,7 @@ namespace NethysBot.Modules
 
 		}
 		
-		[Command("Check"), Alias("C", "Skill","SkillCheck")]
+		[Command("Check"), Alias("C", "Skill","SkillCheck","SC")]
 		public async Task SkillCheck(string Skill, params string[] args)
 		{
 			Character c;
@@ -317,7 +317,7 @@ namespace NethysBot.Modules
 			await ReplyAsync(" ", embed.Build());
 		}
 
-		[Command("Ability"), Alias("A")]
+		[Command("Ability"), Alias("A","AbilityCheck")]
 		public async Task ability(Saves saves, params string[] args)
 		{
 			Character c;
@@ -419,6 +419,7 @@ namespace NethysBot.Modules
 					await ReplyAsync("You have no active companion.");
 					return;
 				}
+				
 			}
 			else
 			{
@@ -602,7 +603,7 @@ namespace NethysBot.Modules
 
 					string summary = "";
 
-					var result = Roller.Roll("d20 + " + hit + arguments);
+					var result = Roller.Roll("d20 + " + hit);
 
 					summary += "Attack roll: " + ParseResult(result) + " = `" + result.Value + "`";
 
