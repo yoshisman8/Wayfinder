@@ -96,7 +96,7 @@ namespace NethysBot.Services
 
 			if(context.Guild == null)
 			{
-				if (!message.HasStringPrefix("!", ref argPos) && !message.HasMentionPrefix(_discord.CurrentUser, ref argPos)) return;
+				if (!message.HasStringPrefix(_config["prefix"], ref argPos) && !message.HasMentionPrefix(_discord.CurrentUser, ref argPos)) return;
 
 				await HandleCommand(context, argPos, _provider);
 			}
