@@ -566,7 +566,7 @@ namespace NethysBot.Modules
 
 					string summary = "";
 
-					var result = Roller.Roll("d20 + " + hit + arguments);
+					var result = Roller.Roll("d20 + " + hit);
 
 					summary += "Spell Attack roll: " + ParseResult(result) + " = `" + result.Value + "`"+
 						"\nDC: `"+dc+"`";
