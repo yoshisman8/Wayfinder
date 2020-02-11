@@ -528,13 +528,37 @@ namespace NethysBot.Modules
 
 				if ((string)s["attack"] == "spell")
 				{
-					if (!values.ContainsKey("ranged " + (string)s["name"]))
+					var classes = await SheetService.Get(c, "classes");
+					JToken cl = null;
+					if (((string)s["class"]).NullorEmpty())
+					{
+						cl = classes.FirstOrDefault();
+					}
+					else
+					{
+						cl = classes.First(x => (string)x["id"] == (string)s["class"]);
+					}
+					if(classes == null	|| classes.Count == 0)
+					{
+						await ReplyAsync("You don't seem to have a class. Without one you can't make spell attacks.");
+						return;
+					}
+					
+					if (!values.ContainsKey(((string)cl["name"]).ToLower()))
 					{
 						await ReplyAsync("Sorry! It seems we cannot retrieve the data for this strike! This issue is outside of the bot's control and will likely be solved later.");
 						return;
 					}
-					hit = (string)values["ranged " + (string)s["name"]]["bonus"];
+
+					
+
+
+					hit = (string)values[((string)cl["name"]).ToLower()]["bonus"];
+
+					int dc = int.Parse(hit??"0") + 10;
+
 					dmg = (string)s["overridedamage"];
+
 					if (!dmg.NullorEmpty() && AttributeRegex.IsMatch(dmg))
 					{
 						dmg = await ParseValues(dmg, c, values);
@@ -544,8 +568,23 @@ namespace NethysBot.Modules
 
 					var result = Roller.Roll("d20 + " + hit + arguments);
 
-					summary += "Attack roll: " + ParseResult(result) + " = `" + result.Value + "`";
+					summary += "Spell Attack roll: " + ParseResult(result) + " = `" + result.Value + "`"+
+						"\nDC: `"+dc+"`";
 
+					if (!((string)s["spell"]).NullorEmpty())
+					{
+						var spells = await SheetService.Get(c, "spells");
+						var sp = spells.First(x => (string)x["id"] == (string)s["spell"]);
+						if (!((string)sp["body"]).NullorEmpty())
+						{
+							embed.AddField("Spell description", sp["body"]);
+						}
+						if (!((string)sp["savingthrow"]).NullorEmpty())
+						{
+							summary += "\nSaving Throw: " + sp["savingthrow"];
+						}
+						embed.WithTitle(c.Name + " casts " + (sp["name"] ?? "Unnamed Spell") + "!");
+					}
 					if (!dmg.NullorEmpty())
 					{
 						try
