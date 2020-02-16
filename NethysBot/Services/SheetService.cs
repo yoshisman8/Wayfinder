@@ -836,7 +836,7 @@ namespace NethysBot.Services
 
 			if(lv0.Count() > 0)
 			{
-				int slots = (from cl in json["classes"]
+				int slots = (from cl in json["data"]
 							 where cl["spell0"] != null
 							 select (int)cl["spell0"]).Sum();
 				foreach (var s in lv0)
@@ -866,7 +866,7 @@ namespace NethysBot.Services
 						  select sp;
 				if (sps.Count() == 0) continue;
 
-				int slots = (from cl in json["classes"]
+				int slots = (from cl in json["data"]
 							 where cl["spell" + i] != null
 							 select (int)cl["spell" + i]).Sum();
 
