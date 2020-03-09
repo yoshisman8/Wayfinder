@@ -13,12 +13,19 @@ namespace NethysBot.Helpers
 	{
 		public static bool IsImageUrl(this string URL)
 		{
-			var req = (HttpWebRequest)HttpWebRequest.Create(URL);
-			req.Method = "HEAD";
-			using (var resp = req.GetResponse())
+			try
 			{
-				return resp.ContentType.ToLower(CultureInfo.InvariantCulture)
-						.StartsWith("image/",StringComparison.OrdinalIgnoreCase);
+				var req = (HttpWebRequest)HttpWebRequest.Create(URL);
+				req.Method = "HEAD";
+				using (var resp = req.GetResponse())
+				{
+					return resp.ContentType.ToLower(CultureInfo.InvariantCulture)
+							.StartsWith("image/",StringComparison.OrdinalIgnoreCase);
+				}
+			}
+			catch
+			{
+				return false;
 			}
 		}
 		public static bool NullorEmpty(this string _string)

@@ -114,13 +114,13 @@ namespace NethysBot.Modules
 					}
 					bonus = values["famperception "+c.Familiar]["bonus"] ?? 0;
 					arguments = arguments.Replace("-f", "");
-					message = c.Name + "'s familiar makes a Preception check!";
+					message = c.Name + "'s familiar makes a Perception check!";
 					embed.WithThumbnailUrl(c.FamImg);
 				}
 				else
 				{
 					bonus = values["perception"]["bonus"] ?? 0;
-					message = c.Name + " makes a Preception check!";
+					message = c.Name + " makes a Perception check!";
 					embed.WithThumbnailUrl(c.ImageUrl);
 				}
 				var result = Roller.Roll("d20 + " + bonus + arguments);

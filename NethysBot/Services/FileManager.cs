@@ -310,9 +310,9 @@ namespace NethysBot.Services
 			if (s["range"] != null) sb.AppendLine("**Range** " + s["range"]);
 			// if (s["area"] != null) sb.AppendLine("**Area** " + s["area"]);
 			// if (s["targets"] != null) sb.AppendLine("**Targets** " + s["targets"]);
-			if (s["savingthrow"] != null) sb.AppendLine("**Saving Throw**" + ((string)s["savingthrow"]).Uppercase() + (s["basic"] != null ? " (Basic)" : ""));
-			if (s["cost"] != null) embed.AddField("Cost", (string)s["cost"],true);
-			if (s["primarycheck"] != null) embed.AddField("Primary Check", (string)s["primarycheck"], true);
+			if (s["savingthrow"] != null) sb.AppendLine("**Saving Throw** " + ((string)s["savingthrow"]).Uppercase() + (s["basic"] != null ? " (Basic)" : ""));
+			if (s["cost"] != null) embed.AddField("Cost ", (string)s["cost"],true);
+			if (s["primarycheck"] != null) embed.AddField("Primary Check ", (string)s["primarycheck"], true);
 
 			sb.AppendLine((string)s["body"] ?? "No Description");
 
