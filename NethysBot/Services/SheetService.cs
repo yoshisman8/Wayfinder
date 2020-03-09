@@ -279,7 +279,7 @@ namespace NethysBot.Services
 			sb.AppendLine("Lv" + (string)full["level"] + (((string)full["ancestry"]).NullorEmpty() ? "" : " " + (string)full["ancestry"]) + (full["classes"].HasValues ? " " + (string)full["classes"][0]["name"] : " Adventurer"));
 			sb.AppendLine(Icons.Sheet["hp"] + " HP `" + ((int)(values?["hp"]["value"]??0) - (int)(full["damage"] ?? 0)) + "/" + (values?["hp"]["value"] ?? 0) + "`");
 			sb.AppendLine(Icons.Sheet["ac"] + " AC `" + (values?["armor class"]["value"]??"Unknown") + "`");
-			sb.AppendLine(Icons.Sheet["per"] + " Perception `" + ((int)(values?["perception"]["bonus"]??0)).ToModifierString() + "` (DC " + (full["perception"]["value"]??"Unknown") + ")");
+			sb.AppendLine(Icons.Sheet["per"] + " Perception `" + ((int)(values?["perception"]["bonus"]??0)).ToModifierString() + "` (DC " + (values["perception"]["value"]??"Unknown") + ")");
 
 			embed.WithDescription(sb.ToString());
 			sb.Clear();
@@ -362,7 +362,7 @@ namespace NethysBot.Services
 				{
 					if (!((string)skills[index]["lore"]).NullorEmpty())
 					{
-						int bonus = int.Parse((string)values?[((string)skills[index]["lore"]).ToLower()]["value"] ?? "0");
+						int bonus = int.Parse((string)values?[((string)skills[index]["lore"]).ToLower()]["bonus"] ?? "0");
 						string icon = (string)skills[index]["ability"] ?? "intelligence";
 						sb.AppendLine(Icons.Scores[icon] + " " + ((string)skills[index]["lore"]).Substring(0, Math.Min(9, ((string)skills[index]["lore"]).Length)).Uppercase() + " " + Icons.Proficiency[(string)skills[index]["proficiency"]] + " " + bonus.ToModifierString());
 					}

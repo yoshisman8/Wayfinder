@@ -84,6 +84,14 @@ namespace NethysBot.Modules
 				}
 			}
 
+			for(int i = 0; i < args.Length; i++)
+			{
+				if(!int.TryParse(args[i],out int a) && args[i].ToLower() != "-c" && args[i].ToLower() != "-f")
+				{
+					args[i] = " ";
+				}
+			}
+
 			string arguments = string.Join(" ", args).Replace("-c","");
 			
 			var sheet = await SheetService.GetFullSheet(c);
@@ -236,6 +244,13 @@ namespace NethysBot.Modules
 				}
 			}
 
+			for (int i = 0; i < args.Length; i++)
+			{
+				if (!int.TryParse(args[i], out int a) && args[i].ToLower() != "-c" && args[i].ToLower() != "-f")
+				{
+					args[i] = " ";
+				}
+			}
 			string arguments = string.Join(" ", args).Replace("-c", "");
 
 			var sheet = await SheetService.GetFullSheet(c);
@@ -337,6 +352,14 @@ namespace NethysBot.Modules
 				{
 					await ReplyAsync("You have no active character.");
 					return;
+				}
+			}
+
+			for (int i = 0; i < args.Length; i++)
+			{
+				if (!int.TryParse(args[i], out int a) && args[i].ToLower() != "-c" && args[i].ToLower() != "-f")
+				{
+					args[i] = " ";
 				}
 			}
 
