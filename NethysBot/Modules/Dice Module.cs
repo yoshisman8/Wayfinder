@@ -20,7 +20,7 @@ namespace NethysBot.Modules
 	{
 		private Regex DiceRegex = new Regex(@"(\d?[dD]\d)+\s*((\+|\-|)?\s*(\d+)?)*");
 		private Regex AttributeRegex = new Regex(@"(\{(\w+)\})");
-
+		private Regex BonusRegex = new Regex(@"\+?\-?\s?\d+");
 
 		[Command("Roll"), Alias("R", "Dice")]
 		[Summary("Make a dice roll.")]
@@ -62,10 +62,13 @@ namespace NethysBot.Modules
 		}
 		
 		[Command("Check"), Alias("C", "Skill","SkillCheck","SC")]
-		public async Task SkillCheck(string Skill, params string[] args)
+		public async Task SkillCheck([Remainder] string Skill)
 		{
 			Character c;
-			if (args.Length >= 1 && args.Contains("-c"))
+			Skill = Skill.ToLower();
+			bool familiar = false;
+
+			if (Skill.Contains("-c"))
 			{
 				c = GetCompanion();
 				if(c == null)
@@ -73,6 +76,7 @@ namespace NethysBot.Modules
 					await ReplyAsync("You have no active companion.");
 					return;
 				}
+				Skill = Skill.Replace("-c", "").Trim();
 			}
 			else
 			{
@@ -83,16 +87,21 @@ namespace NethysBot.Modules
 					return;
 				}
 			}
-
-			for(int i = 0; i < args.Length; i++)
+			if (Skill.Contains("-f"))
 			{
-				if(!int.TryParse(args[i],out int a) && args[i].ToLower() != "-c" && args[i].ToLower() != "-f")
-				{
-					args[i] = " ";
-				}
+				familiar = true;
+				Skill = Skill.Replace("-f", "".Trim());
 			}
-
-			string arguments = string.Join(" ", args).Replace("-c","");
+			string[] Bonuses = new string[0];
+			if (BonusRegex.IsMatch(Skill))
+			{
+				Bonuses = BonusRegex.Matches(Skill).Select(x => x.Value).ToArray();
+				foreach (var b in Bonuses)
+				{
+					Skill = Skill.Replace(b, "");
+				}
+				Skill = Skill.Trim();
+			}
 			
 			var sheet = await SheetService.GetFullSheet(c);
 			var values = await SheetService.GetValues(c);
@@ -108,12 +117,12 @@ namespace NethysBot.Modules
 			}
 
 			
-			if(Skill.ToLower() == "perception")
+			if(Skill == "perception"||Skill== "per" || Skill == "perc")
 			{
 				var embed = new EmbedBuilder();
 				JToken bonus;
 				string message = "";
-				if (args.Contains("-f"))
+				if (familiar)
 				{
 					if (c.Familiar.NullorEmpty())
 					{
@@ -121,7 +130,6 @@ namespace NethysBot.Modules
 						return;
 					}
 					bonus = values["famperception "+c.Familiar]["bonus"] ?? 0;
-					arguments = arguments.Replace("-f", "");
 					message = c.Name + "'s familiar makes a Perception check!";
 					embed.WithThumbnailUrl(c.FamImg);
 				}
@@ -131,7 +139,7 @@ namespace NethysBot.Modules
 					message = c.Name + " makes a Perception check!";
 					embed.WithThumbnailUrl(c.ImageUrl);
 				}
-				var result = Roller.Roll("d20 + " + bonus + arguments);
+				var result = Roller.Roll("d20 + " + bonus + (Bonuses.Length>0?"+"+string.Join("+",Bonuses):""));
 
 				
 				embed.WithTitle(message)
@@ -155,7 +163,7 @@ namespace NethysBot.Modules
 				var embed = new EmbedBuilder();
 				JToken bonus;
 				string message = "";
-				if (args.Contains("-f"))
+				if (familiar)
 				{
 					if (c.Familiar.NullorEmpty())
 					{
@@ -177,7 +185,6 @@ namespace NethysBot.Modules
 							message = c.Name + "'s familiar makes a skill check!";
 							break;
 					}
-					arguments = arguments.Replace("-f", "");
 					embed.WithThumbnailUrl(c.FamImg);
 				}
 				else
@@ -201,7 +208,7 @@ namespace NethysBot.Modules
 					embed.WithThumbnailUrl(c.ImageUrl);
 				}
 
-				var result = Roller.Roll("d20 + " + bonus + arguments);
+				var result = Roller.Roll("d20 + " + bonus + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
 
 				
 				embed.WithTitle(message)
@@ -429,20 +436,22 @@ namespace NethysBot.Modules
 
 			await ReplyAsync(" ", embed.Build());
 		}
-		
-		[Command("Strike"), Alias("S")]
-		public async Task Attack(string Strike = null, params string[] args)
+
+		[Command("Strike"), Alias("S", "Strikes")]
+		public async Task Attack([Remainder]string args = "")
 		{
 			Character c;
-			if (args.Length >= 1 && args.Contains("-c"))
+			args = args.ToLower();
+
+			if (args.Contains("-c"))
 			{
 				c = GetCompanion();
+				args = args.Replace("-c", "");
 				if (c == null)
 				{
 					await ReplyAsync("You have no active companion.");
 					return;
 				}
-				
 			}
 			else
 			{
@@ -453,7 +462,7 @@ namespace NethysBot.Modules
 					return;
 				}
 			}
-			if (Strike.NullorEmpty())
+			if (args.NullorEmpty())
 			{
 				var strikes = await SheetService.Get(c, "strikes");
 				var embed = new EmbedBuilder()
@@ -464,21 +473,21 @@ namespace NethysBot.Modules
 				{
 					await ReplyAsync(c.Name + " has no strikes.");
 					return;
-				}				
+				}
 
 				var sb = new StringBuilder();
 				foreach (var s in strikes)
 				{
 					string act = Icons.Actions["1"];
-					if (!((string)s["action"]).NullorEmpty())
+					if (!((string)s["actions"]).NullorEmpty())
 					{
-						if (Icons.Actions.TryGetValue((string)s["action"], out string ic))
+						if (Icons.Actions.TryGetValue((string)s["actions"], out string ic))
 						{
 							act = ic;
 						}
-						else act = "[" + s["action"] + "]";
+						else act = "[" + s["actions"] + "]";
 					}
-					sb.AppendLine(Icons.Strike[(string)s["attack"]] +" " +(((string)s["name"]).NullorEmpty()? "Unnamed Strike": (string)s["name"]) + " " + act);
+					sb.AppendLine(Icons.Strike[(string)s["attack"]] + " " + (((string)s["name"]).NullorEmpty() ? "Unnamed Strike" : (string)s["name"]) + " " + act);
 				}
 				embed.WithDescription(sb.ToString());
 
@@ -499,7 +508,18 @@ namespace NethysBot.Modules
 			}
 			else
 			{
-				string arguments = string.Join(" ", args).Replace("-c", "");
+				
+				string[] Bonuses = new string[0];
+
+				if (BonusRegex.IsMatch(args))
+				{
+					Bonuses = BonusRegex.Matches(args).Select(x => x.Value).ToArray();
+					foreach (var b in Bonuses)
+					{
+						args = args.Replace(b, "");
+					}
+					args = args.Trim();
+				}
 
 				var Jstrikes = await SheetService.Get(c, "strikes");
 				var values = await SheetService.GetValues(c);
@@ -515,13 +535,13 @@ namespace NethysBot.Modules
 				}
 
 				var strikes = from sk in Jstrikes
-							  where ((string)sk["name"]).ToLower().StartsWith(Strike.ToLower())
+							  where ((string)sk["name"]).ToLower().StartsWith(args)
 							  orderby sk["name"]
 							  select sk;
 
 				if (strikes.Count() == 0)
 				{
-					await ReplyAsync("You have no strikes whose name starts with that.");
+					await ReplyAsync("You have no strikes whose name starts with '" + args + "'.");
 					return;
 				}
 
@@ -546,11 +566,13 @@ namespace NethysBot.Modules
 
 				string hit = "";
 				string dmg = "";
-				string bonus = "";
+				string penalties = "";
+				string damagebonus = "";
 				string dmgtype = "Untyped";
 
 				if ((string)s["attack"] == "spell")
 				{
+					dmgtype = "Spell";
 					var classes = await SheetService.Get(c, "classes");
 					JToken cl = null;
 					if (((string)s["class"]).NullorEmpty())
@@ -561,24 +583,24 @@ namespace NethysBot.Modules
 					{
 						cl = classes.First(x => (string)x["id"] == (string)s["class"]);
 					}
-					if(classes == null	|| classes.Count == 0)
+					if (classes == null || classes.Count == 0)
 					{
 						await ReplyAsync("You don't seem to have a class. Without one you can't make spell attacks.");
 						return;
 					}
-					
+
 					if (!values.ContainsKey(((string)cl["name"]).ToLower()))
 					{
 						await ReplyAsync("Sorry! It seems we cannot retrieve the data for this strike! This issue is outside of the bot's control and will likely be solved later.");
 						return;
 					}
 
-					
+
 
 
 					hit = (string)values[((string)cl["name"]).ToLower()]["bonus"];
 
-					int dc = int.Parse(hit??"0") + 10;
+					int dc = int.Parse(hit ?? "0") + 10;
 
 					dmg = (string)s["overridedamage"];
 
@@ -589,10 +611,10 @@ namespace NethysBot.Modules
 
 					string summary = "";
 
-					var result = Roller.Roll("d20 + " + hit);
+					var result = Roller.Roll("d20 + " + hit + (penalties != "0" ? " -" + penalties : "") +(Bonuses.Length >0?string.Join(" ",Bonuses):""));
 
-					summary += "Spell Attack roll: " + ParseResult(result) + " = `" + result.Value + "`"+
-						"\nDC: `"+dc+"`";
+					summary += "Spell Attack roll: " + ParseResult(result) + " = `" + result.Value + "`" +
+						"\nDC: `" + dc + "`";
 
 					if (!((string)s["spell"]).NullorEmpty())
 					{
@@ -612,7 +634,8 @@ namespace NethysBot.Modules
 					{
 						try
 						{
-							RollResult result2 = Roller.Roll(dmg + bonus);
+							RollResult result2 = Roller.Roll(dmg + damagebonus);
+
 							summary += "\n" + dmgtype.Uppercase() + " damage: " + ParseResult(result2) + " = `" + result2.Value + "` ";
 
 							if (!((string)s["extradamage"]).NullorEmpty())
@@ -652,20 +675,21 @@ namespace NethysBot.Modules
 					if ((string)s["attack"] == "melee" || ((string)s["attack"]).NullorEmpty())
 					{
 						hit = (string)values["melee " + (string)s["name"]]["bonus"];
-						bonus += ((int)values["strength"]["value"]).PrintModifier();
+						penalties = (string)values["melee " + (string)s["name"]]["penalty"];
 					}
 					else
 					{
 						hit = (string)values["ranged " + (string)s["name"]]["bonus"];
+						penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
 					}
-					
-					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
 
-					bonus += !((string)s["moddamage"]).NullorEmpty() && (int)s["moddamage"] > 0 ? ((int)s["moddamage"]).ToModifierString() : "";
+					damagebonus = (string)values["damage " + (string)s["name"]]["value"];
+
+					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
 
 					string summary = "";
 
-					var result = Roller.Roll("d20 + " + hit);
+					var result = Roller.Roll("d20 + " + hit + (penalties != "0"? "-"+penalties:"") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
 
 					summary += "Attack roll: " + ParseResult(result) + " = `" + result.Value + "`";
 
@@ -673,7 +697,7 @@ namespace NethysBot.Modules
 					{
 						try
 						{
-							RollResult result2 = Roller.Roll(dmg + bonus);
+							RollResult result2 = Roller.Roll(dmg + "+" + damagebonus);
 							summary += "\n" + dmgtype.Uppercase() + " damage: " + ParseResult(result2) + " = `" + result2.Value + "` ";
 
 							if (!((string)s["extradamage"]).NullorEmpty())
