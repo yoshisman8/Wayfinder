@@ -595,9 +595,6 @@ namespace NethysBot.Modules
 						return;
 					}
 
-
-
-
 					hit = (string)values[((string)cl["name"]).ToLower()]["bonus"];
 
 					int dc = int.Parse(hit ?? "0") + 10;
@@ -611,7 +608,7 @@ namespace NethysBot.Modules
 
 					string summary = "";
 
-					var result = Roller.Roll("d20 + " + hit + (penalties != "0" ? " -" + penalties : "") +(Bonuses.Length >0?string.Join(" ",Bonuses):""));
+					var result = Roller.Roll("d20 + " + hit +(Bonuses.Length >0?string.Join(" ",Bonuses):""));
 
 					summary += "Spell Attack roll: " + ParseResult(result) + " = `" + result.Value + "`" +
 						"\nDC: `" + dc + "`";
