@@ -20,5 +20,6 @@ namespace NethysBot.Models
 	{
 		public string Name { get; set; }
 		public float Initiative { get; set; }
+		public ulong Player { get; set; }
 	}
 }

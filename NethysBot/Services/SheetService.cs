@@ -18,6 +18,7 @@ using System.Data;
 using System.Runtime.InteropServices;
 using System.Threading.Channels;
 using Newtonsoft.Json;
+using System.Runtime.ExceptionServices;
 
 namespace NethysBot.Services
 {
@@ -459,7 +460,16 @@ namespace NethysBot.Services
 
 			foreach(var f in feats)
 			{
-				sb.AppendLine("• "+(f["name"]??"Unnamed Feat") + " (" + ((string)f["subtype"] ?? "Feat").Uppercase() + " " + f["level"]+")");
+				var act = (string)f["actions"];
+
+				if (act != null)
+				{
+					if (Icons.Actions.TryGetValue(act, out string icon))
+					{
+						act = icon;
+					}
+				}
+				sb.AppendLine("• "+(f["name"]??"Unnamed Feat") + " (" + ((string)f["subtype"] ?? "Feat").Uppercase() + " " + f["level"]+") "+act??"");
 			}
 
 			embed.WithDescription(sb.ToString());
@@ -541,12 +551,17 @@ namespace NethysBot.Services
 		public async Task<Embed> GetAction(Character c, string name, SocketCommandContext context = null)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId + "/activities");
+			var request2 = await Client.GetAsync(Api + c.RemoteId + "/feats");
 
 			request.EnsureSuccessStatusCode();
+			request2.EnsureSuccessStatusCode();
+
 
 			string responsebody = await request.Content.ReadAsStringAsync();
+			string responsebody2 = await request2.Content.ReadAsStringAsync();
 
 			var json = JObject.Parse(responsebody);
+			var json2 = JObject.Parse(responsebody2);
 
 			if (!json["data"].HasValues) return null;
 
@@ -554,10 +569,14 @@ namespace NethysBot.Services
 						   where ((string)fs["name"]).ToLower().StartsWith(name.ToLower())
 						   orderby fs["name"]
 						   select fs;
+			var feats = from fs in json2["data"]
+						where fs["actions"] != null && ((string)fs["name"]).ToLower().StartsWith(name.ToLower())
+						orderby fs["name"]
+						select fs;
 
-			if (features.Count() <= 0) return null;
+			if (features.Count() <= 0 && feats.Count() <= 0) return null;
 
-			var f = features.First();
+			var f = features.Count() == 0 ? feats.First() : features.First();
 
 			var embed = FileManager.EmbedAction(f);
 
@@ -573,16 +592,23 @@ namespace NethysBot.Services
 		public async Task<Embed> GetAllActions(Character c, SocketCommandContext context = null)
 		{
 			var request = await Client.GetAsync(Api + c.RemoteId + "/activities");
+			var request2 = await Client.GetAsync(Api + c.RemoteId + "/feats");
 
 			request.EnsureSuccessStatusCode();
+			request2.EnsureSuccessStatusCode();
+
 
 			string responsebody = await request.Content.ReadAsStringAsync();
+			string responsebody2 = await request2.Content.ReadAsStringAsync();
 
 			var json = JObject.Parse(responsebody);
+			var json2 = JObject.Parse(responsebody2);
+			var afeats = json2["data"].Where(x => x["actions"] != null);
 
-			if (!json["data"].HasValues) return null;
+			if (!json["data"].HasValues && afeats.Count() == 0) return null;
 
 			var feats = json["data"].Children();
+			
 
 			var embed = new EmbedBuilder()
 				.WithTitle(c.Name + "'s Actions")
@@ -615,7 +641,20 @@ namespace NethysBot.Services
 				}
 				sb.AppendLine("• " + (f["name"] ?? "Unnamed Activity") + " " + act??"");
 			}
+			foreach (var a in afeats)
+			{
+				var act = (string)a["actions"];
 
+				if (act != null)
+				{
+					if (Icons.Actions.TryGetValue(act, out string icon))
+					{
+						act = icon;
+					}
+				}
+				sb.AppendLine("• " + (a["name"] ?? "Unnamed Feat") + " " + act ?? "");
+
+			}
 			embed.WithDescription(sb.ToString());
 			
 			return embed.Build();
