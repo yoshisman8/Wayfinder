@@ -346,13 +346,13 @@ namespace NethysBot.Modules
 						var c = results.ElementAt(index);
 						var u = GetUser();
 
-						if (c.InternalId == u.Character.InternalId)
+						if (u.Character!= null && c.InternalId == u.Character.InternalId)
 						{
 							u.Character = null;
 
 							UpdateUser(u);
 						}
-						if (c.InternalId == u.Companion.InternalId)
+						if (u.Companion!= null && c.InternalId == u.Companion.InternalId)
 						{
 							u.Companion = null;
 							UpdateUser(u);
