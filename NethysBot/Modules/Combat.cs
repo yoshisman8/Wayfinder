@@ -209,7 +209,7 @@ namespace NethysBot.Modules
 
 				var s = snk.FirstOrDefault();
 				string name = (string)s["lore"] ?? (string)s["name"];
-				var bonus = values[name.ToLower()]["bonus"] ?? 0;
+				var bonus =  (int)values[name.ToLower()]["bonus"] -(int)values[name.ToLower()]["penalty"];
 
 				try
 				{
