@@ -46,6 +46,7 @@ namespace NethysBot.Modules
 						b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
 						b.CurrentTurn = b.Participants.First();
 						b.Started = true;
+						b.Round = 1;
 						UpdateBattle(b);
 						await CurrentTurn(b,Context);
 						return;
@@ -56,10 +57,11 @@ namespace NethysBot.Modules
 						b.Director = Context.User.Id;
 						b.Active = true;
 						b.Started = false;
+						b.Round = 0;
 						var embed = new EmbedBuilder().WithTitle("Roll for initiative!")
 							.WithDescription(Context.User.Username + " has started a new encounter!")
 							.AddField("Players", "Use the `!Initiative SkillName` command to enter initiative.\nYou can also use `!Initiative #` to add your initative number manually.",true)
-							.AddField("Director", "Use `!AddNPC Name Initaitve` to add NPCs to the turn order.",true)
+							.AddField("Director", "Use `!AddNPC Initaitve Name` to add NPCs to the turn order.",true)
 							.AddField("Ready to go?","Once all characters have been added, use the `!Encounter Start` command again to start the encounter.")
 							.AddField("Advancing Turns","Use `!next` to end your turn and ping the next person in the initiative order.")
 							.AddField("Need more help?","Use the `!Help Encounter` for a breakdown of all Encounter commands!");
@@ -78,6 +80,7 @@ namespace NethysBot.Modules
 						b.Active = false;
 						b.Started = false;
 						b.Participants = new List<Participant>();
+						b.Round = 0;
 						UpdateBattle(b);
 						await ReplyAsync("Encounter over!");
 					}
@@ -110,11 +113,13 @@ namespace NethysBot.Modules
 			{
 				var i = b.Participants.FindIndex(x => x.Name.ToLower() == c.Name.ToLower());
 				b.Participants[i] = new Participant() { Initiative = number, Name = c.Name, Player = c.Owner };
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
 				UpdateBattle(b);
 			}
 			else
 			{
 				b.Participants.Add(new Participant() { Initiative = number, Name = c.Name, Player = c.Owner });
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
 				UpdateBattle(b);
 			}
 
@@ -177,11 +182,13 @@ namespace NethysBot.Modules
 					{
 						var i = b.Participants.FindIndex(x => x.Name.ToLower() == c.Name.ToLower());
 						b.Participants[i] = new Participant( ){ Initiative = (int)results.Value, Name = c.Name, Player = c.Owner };
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
 						UpdateBattle(b);
 					}
 					else
 					{
 						b.Participants.Add(new Participant() { Initiative = (int)results.Value, Name = c.Name, Player = c.Owner });
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
 						UpdateBattle(b);
 					}
 				}
@@ -220,11 +227,13 @@ namespace NethysBot.Modules
 					{
 						var i = b.Participants.FindIndex(x => x.Name.ToLower() == c.Name.ToLower());
 						b.Participants[i] = new Participant() { Initiative = (int)results.Value, Name = c.Name, Player = c.Owner };
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
 						UpdateBattle(b);
 					}
 					else
 					{
 						b.Participants.Add(new Participant() { Initiative = (int)results.Value, Name = c.Name, Player = c.Owner });
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
 						UpdateBattle(b);
 					}
 				}
@@ -261,10 +270,23 @@ namespace NethysBot.Modules
 				await ReplyAsync("You are not the Game Master for this encounter.");
 				return;
 			}
-			b.Participants.Add(new Participant() { Initiative = initiative, Name = Name, Player = b.Director });
-			UpdateBattle(b);
-			await ReplyAsync("Added NPC \""+Name+"\" to the encounter with initiative `" + initiative + "`.");
+			if (b.Participants.Any(x => x.Name.ToLower() == Name.ToLower()))
+			{
+				var i = b.Participants.FindIndex(x => x.Name.ToLower() == Name.ToLower());
+				b.Participants[i] = new Participant() { Initiative = initiative, Name = Name, Player = b.Director };
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
+				UpdateBattle(b);
+				await ReplyAsync("Changed \"" + Name + "\"'s Initiative to `" + initiative + "`.");
+			}
+			else
+			{
+				b.Participants.Add(new Participant() { Initiative = initiative, Name = Name, Player = b.Director });
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
+				UpdateBattle(b);
+				await ReplyAsync("Added NPC \""+Name+"\" to the encounter with initiative `" + initiative + "`.");
+			}
 		}
+
 		[Command("Remove")] [RequireContext(ContextType.Guild)]
 		public async Task remNPC([Remainder] string Name)
 		{
@@ -323,11 +345,29 @@ namespace NethysBot.Modules
 
 						var p = pars[index];
 						b.Participants.Remove(p);
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
+						if(p.Name == b.CurrentTurn.Name)
+						{
+							b.CurrentTurn = b.Participants.FirstOrDefault();
+						}
 						UpdateBattle(b);
 						await ReplyAsync(p.Name + " has been removed form initiative.");
 						return;
 					}
 				}
+			}
+			else
+			{
+				var p = pars.FirstOrDefault();
+				b.Participants.Remove(p);
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).Reverse().ToList();
+				if (p.Name == b.CurrentTurn.Name)
+				{
+					b.CurrentTurn = b.Participants.FirstOrDefault();
+				}
+				UpdateBattle(b);
+				await ReplyAsync(p.Name + " has been removed form initiative.");
+				return;
 			}
 		}
 		[Command("ForceEnd")] [RequireUserPermission(ChannelPermission.ManageMessages)]
@@ -397,19 +437,23 @@ namespace NethysBot.Modules
 			if(b.CurrentTurn.Player > 0)
 			{
 				var player = context.Client.GetUser(b.CurrentTurn.Player);
-				await channel.SendMessageAsync(player.Mention + ", " + b.CurrentTurn.Name + "'s turn!");
+				await channel.SendMessageAsync(player.Mention + ", " + b.CurrentTurn.Name + "'s turn!",false,DisplayBattle(b,context));
 			}
 			else
 			{
 				var player = context.Client.GetUser(b.Director);
-				await channel.SendMessageAsync(player.Mention + ", " + b.CurrentTurn.Name + "'s turn!");
+				await channel.SendMessageAsync(player.Mention + ", " + b.CurrentTurn.Name + "'s turn!", false, DisplayBattle(b, context));
 			}
 		}
 		public async Task NextTurn(Battle B, SocketCommandContext context)
 		{
 			int i = B.Participants.IndexOf(B.CurrentTurn);
 
-			if (i + 1 >= B.Participants.Count) B.CurrentTurn = B.Participants.First();
+			if (i + 1 >= B.Participants.Count) 
+			{
+				B.CurrentTurn = B.Participants.First();
+				B.Round++;
+			}
 			else B.CurrentTurn = B.Participants[i + 1];
 			UpdateBattle(B);
 			await CurrentTurn(B, context);
@@ -423,7 +467,8 @@ namespace NethysBot.Modules
 
 			var embed = new EmbedBuilder()
 				.WithTitle("Encounter")
-				.WithDescription("Started? "+(b.Started?"Yes": "No"))
+				.WithDescription("Started? " + (b.Started ? "Yes" : "No") +
+				"\nRound: `" + b.Round + "`")
 				.AddField("Game Master", context.Client.GetUser(b.Director).Mention, true);
 			var summary = new StringBuilder();
 			foreach(var p in b.Participants)
