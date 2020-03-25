@@ -139,7 +139,7 @@ namespace NethysBot.Modules
 					message = c.Name + " makes a Perception check!";
 					embed.WithThumbnailUrl(c.ImageUrl);
 				}
-				var result = Roller.Roll("d20 + " + bonus + (Bonuses.Length>0?"+"+string.Join("+",Bonuses):""));
+				var result = Roller.Roll("d20 + " + bonus + (Bonuses.Length>0?string.Join(" ",Bonuses):""));
 
 				
 				embed.WithTitle(message)
