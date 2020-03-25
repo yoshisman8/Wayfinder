@@ -84,7 +84,7 @@ namespace NethysBot.Modules
 					return;
 			}
 		}
-		[Command("Initative"),Alias("Join","Init")]
+		[Command("Initiative"),Alias("Join","Init")]
 		[Priority(2)] [RequireContext(ContextType.Guild)]
 		public async Task Initiative(int number)
 		{
