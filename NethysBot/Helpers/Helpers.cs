@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Dice;
+using Discord.WebSocket;
 using NethysBot.Models;
 using System;
 using System.Collections.Generic;
@@ -136,6 +137,80 @@ namespace NethysBot.Helpers
 		public static bool StartsWithVowel(this string text)
 		{
 			return "aeiou".IndexOf(text[0].ToString(), StringComparison.InvariantCultureIgnoreCase) >= 0;
+		}
+		public static string ParseResult(this RollResult result)
+		{
+			var sb = new StringBuilder();
+
+			foreach (var dice in result.Values)
+			{
+				switch (dice.DieType)
+				{
+					case DieType.Normal:
+						switch (dice.NumSides)
+						{
+							case 4:
+								sb.Append(Icons.d4[(int)dice.Value] + " ");
+								break;
+							case 6:
+								sb.Append(Icons.d6[(int)dice.Value] + " ");
+								break;
+							case 8:
+								sb.Append(Icons.d8[(int)dice.Value] + " ");
+								break;
+							case 10:
+								sb.Append(Icons.d10[(int)dice.Value] + " ");
+								break;
+							case 12:
+								sb.Append(Icons.d12[(int)dice.Value] + " ");
+								break;
+							case 20:
+								sb.Append(Icons.d20[(int)dice.Value] + " ");
+								break;
+							default:
+								sb.Append(dice.Value);
+								break;
+						}
+						break;
+					case DieType.Special:
+						switch ((SpecialDie)dice.Value)
+						{
+							case SpecialDie.Add:
+								sb.Append("+ ");
+								break;
+							case SpecialDie.CloseParen:
+								sb.Append(") ");
+								break;
+							case SpecialDie.Comma:
+								sb.Append(", ");
+								break;
+							case SpecialDie.Divide:
+								sb.Append("/ ");
+								break;
+							case SpecialDie.Multiply:
+								sb.Append("* ");
+								break;
+							case SpecialDie.Negate:
+								sb.Append("- ");
+								break;
+							case SpecialDie.OpenParen:
+								sb.Append(") ");
+								break;
+							case SpecialDie.Subtract:
+								sb.Append("- ");
+								break;
+							case SpecialDie.Text:
+								sb.Append(dice.Data);
+								break;
+						}
+						break;
+					default:
+						sb.Append(dice.Value + " ");
+						break;
+				}
+			}
+
+			return sb.ToString().Trim();
 		}
 	}
 	public enum TextPadding { Before, After }

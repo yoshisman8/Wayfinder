@@ -12,6 +12,7 @@ namespace NethysBot.Models
 		public int Id { get; set; }
 		public ulong Channel { get; set; }
 		public bool Active { get; set; }
+		public bool Started { get; set; }
 		public ulong Director { get; set; }
 		public List<Participant> Participants { get; set; } = new List<Participant>();
 		public Participant CurrentTurn { get; set; }

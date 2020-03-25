@@ -44,7 +44,7 @@ namespace NethysBot.Modules
 
 				var embed = new EmbedBuilder()
 					.WithTitle(Context.User.Username + " rolled some dice.")
-					.WithDescription(ParseResult(results) + "\nTotal = `" + total + "`");
+					.WithDescription(results.ParseResult() + "\nTotal = `" + total + "`");
 
 				Random randonGen = new Random();
 				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
@@ -143,7 +143,7 @@ namespace NethysBot.Modules
 
 				
 				embed.WithTitle(message)
-					.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
+					.WithDescription(result.ParseResult() + "\nTotal = `" + result.Value + "`")
 					.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString())); ;
 				Random randonGen = new Random();
 				Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
@@ -212,7 +212,7 @@ namespace NethysBot.Modules
 
 				
 				embed.WithTitle(message)
-					.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
+					.WithDescription(result.ParseResult() + "\nTotal = `" + result.Value + "`")
 					.WithFooter((c.ValuesLastUpdated.Outdated()? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
 				
 				Random randonGen = new Random();
@@ -323,7 +323,7 @@ namespace NethysBot.Modules
 			var result = Roller.Roll("d20 + " + bonus + arguments);
 
 			embed.WithTitle(message)
-				.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
+				.WithDescription(result.ParseResult() + "\nTotal = `" + result.Value + "`")
 				.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
 
 			Random randonGen = new Random();
@@ -421,7 +421,7 @@ namespace NethysBot.Modules
 			var embed = new EmbedBuilder()
 				.WithTitle(message)
 				.WithThumbnailUrl(c.ImageUrl)
-				.WithDescription(ParseResult(result) + "\nTotal = `" + result.Value + "`")
+				.WithDescription(result.ParseResult() + "\nTotal = `" + result.Value + "`")
 				.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
 
 			Random randonGen = new Random();
@@ -610,7 +610,7 @@ namespace NethysBot.Modules
 
 					var result = Roller.Roll("d20 + " + hit +(Bonuses.Length >0?string.Join(" ",Bonuses):""));
 
-					summary += "Spell Attack roll: " + ParseResult(result) + " = `" + result.Value + "`" +
+					summary += "Spell Attack roll: " + result.ParseResult() + " = `" + result.Value + "`" +
 						"\nDC: `" + dc + "`";
 
 					if (!((string)s["spell"]).NullorEmpty())
@@ -633,12 +633,12 @@ namespace NethysBot.Modules
 						{
 							RollResult result2 = Roller.Roll(dmg + damagebonus);
 
-							summary += "\n" + dmgtype.Uppercase() + " damage: " + ParseResult(result2) + " = `" + result2.Value + "` ";
+							summary += "\n" + dmgtype.Uppercase() + " damage: " + result2.ParseResult() + " = `" + result2.Value + "` ";
 
 							if (!((string)s["extradamage"]).NullorEmpty())
 							{
 								RollResult result3 = Roller.Roll((string)s["extradamage"]);
-								summary += "\n" + ((string)s["overridedamage"]).Uppercase() + " damage: " + ParseResult(result3) + " = `" + result3.Value + "`";
+								summary += "\n" + ((string)s["overridedamage"]).Uppercase() + " damage: " + result3.ParseResult() + " = `" + result3.Value + "`";
 							}
 						}
 						catch
@@ -688,19 +688,19 @@ namespace NethysBot.Modules
 
 					var result = Roller.Roll("d20 + " + hit + (penalties != "0"? "-"+penalties:"") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
 
-					summary += "Attack roll: " + ParseResult(result) + " = `" + result.Value + "`";
+					summary += "Attack roll: " + result.ParseResult() + " = `" + result.Value + "`";
 
 					if (!dmg.NullorEmpty())
 					{
 						try
 						{
 							RollResult result2 = Roller.Roll(dmg + "+" + damagebonus);
-							summary += "\n" + dmgtype.Uppercase() + " damage: " + ParseResult(result2) + " = `" + result2.Value + "` ";
+							summary += "\n" + dmgtype.Uppercase() + " damage: " + result2.ParseResult() + " = `" + result2.Value + "` ";
 
 							if (!((string)s["extradamage"]).NullorEmpty())
 							{
 								RollResult result3 = Roller.Roll((string)s["extradamage"]);
-								summary += "\n" + ((string)s["overridedamage"]).Uppercase() + " damage: " + ParseResult(result3) + " = `" + result3.Value + "`";
+								summary += "\n" + ((string)s["overridedamage"]).Uppercase() + " damage: " + result3.ParseResult() + " = `" + result3.Value + "`";
 							}
 						}
 						catch
@@ -732,80 +732,7 @@ namespace NethysBot.Modules
 			else if (mod > 6) return DieScale[6] + "+" + (mod - 6);
 			else return DieScale[mod];
 		}
-		private string ParseResult (RollResult result)
-		{
-			var sb = new StringBuilder();
-
-			foreach (var dice in result.Values)
-			{
-				switch (dice.DieType)
-				{
-					case DieType.Normal:
-						switch (dice.NumSides)
-						{
-							case 4:
-								sb.Append(Icons.d4[(int)dice.Value] + " ");
-								break;
-							case 6:
-								sb.Append(Icons.d6[(int)dice.Value] + " ");
-								break;
-							case 8:
-								sb.Append(Icons.d8[(int)dice.Value] + " ");
-								break;
-							case 10:
-								sb.Append(Icons.d10[(int)dice.Value] + " ");
-								break;
-							case 12:
-								sb.Append(Icons.d12[(int)dice.Value] + " ");
-								break;
-							case 20:
-								sb.Append(Icons.d20[(int)dice.Value] + " ");
-								break;
-							default:
-								sb.Append(dice.Value);
-								break;
-						}
-						break;
-					case DieType.Special:
-						switch ((SpecialDie)dice.Value)
-						{
-							case SpecialDie.Add:
-								sb.Append("+ ");
-								break;
-							case SpecialDie.CloseParen:
-								sb.Append(") ");
-								break;
-							case SpecialDie.Comma:
-								sb.Append(", ");
-								break;
-							case SpecialDie.Divide:
-								sb.Append("/ ");
-								break;
-							case SpecialDie.Multiply:
-								sb.Append("* ");
-								break;
-							case SpecialDie.Negate:
-								sb.Append("- ");
-								break;
-							case SpecialDie.OpenParen:
-								sb.Append(") ");
-								break;
-							case SpecialDie.Subtract:
-								sb.Append("- ");
-								break;
-							case SpecialDie.Text:
-								sb.Append(dice.Data);
-								break;
-						}
-						break;
-					default:
-						sb.Append(dice.Value + " ");
-						break;
-				}
-			}
-
-			return sb.ToString().Trim();
-		}
+		
 		private async Task<string> ParseValues(string Raw, Character c, JObject values = null)
 		{
 			if(values == null)
