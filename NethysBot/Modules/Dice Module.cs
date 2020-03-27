@@ -129,7 +129,7 @@ namespace NethysBot.Modules
 						await ReplyAsync("You have no named familiars.");
 						return;
 					}
-					bonus = values["famperception "+c.Familiar]["bonus"] ?? 0;
+					bonus = (int)values["famperception " + c.Familiar]["bonus"] - (int)values["famperception " + c.Familiar]["penalty"]; ;
 					message = c.Name + "'s familiar makes a Perception check!";
 					embed.WithThumbnailUrl(c.FamImg);
 				}
@@ -173,15 +173,15 @@ namespace NethysBot.Modules
 					switch (Skill.ToLower())
 					{
 						case "acrobatics":
-							bonus = values["famacrobatics " + c.Familiar]["bonus"] ?? 0;
+							bonus = (int)values["famacrobatics " + c.Familiar]["bonus"] - (int)values["famacrobatics " + c.Familiar]["penalty"];
 							message = c.Name + "'s familiar makes an Acrobatics check!";
 							break;
 						case "stealth":
-							bonus = values["famstealth " + c.Familiar]["bonus"] ?? 0;
+							bonus = (int)values["famstealth " + c.Familiar]["bonus"] - (int)values["famstealth " + c.Familiar]["penalty"];
 							message = c.Name + "'s familiar makes a Stealth check!";
 							break;
 						default:
-							bonus = values["famother " + c.Familiar]["bonus"] ?? 0;
+							bonus = (int)values["famother " + c.Familiar]["bonus"] - (int)values["famother " + c.Familiar]["penalty"];
 							message = c.Name + "'s familiar makes a skill check!";
 							break;
 					}
