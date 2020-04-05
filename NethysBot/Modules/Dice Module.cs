@@ -18,7 +18,7 @@ namespace NethysBot.Modules
 {
 	public class DiceModule : NethysBase<SocketCommandContext>
 	{
-		private Regex DiceRegex = new Regex(@"(\d?[dD]\d)+\s*((\+|\-|)?\s*(\d+)?)*");
+		// private Regex DiceRegex = new Regex(@"(\d?[dD]\d)+\s*((\+|\-|)?\s*(\d+)?)*"); TO BE DELETED
 		private Regex AttributeRegex = new Regex(@"(\{(\w+)\})");
 		private Regex BonusRegex = new Regex(@"\+?\-?\s?\d+");
 
