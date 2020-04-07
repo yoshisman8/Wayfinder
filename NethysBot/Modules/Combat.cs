@@ -18,7 +18,7 @@ namespace NethysBot.Modules
 
 	public class Combat : NethysBase<SocketCommandContext>
 	{
-		private Regex BonusRegex = new Regex(@"\+?\-?\s?\d+");
+		private Regex BonusRegex = new Regex(@"[\+\-]+\s?\d+");
 		
 		[Command("Encounter"),Alias("Enc", "Battle","Combat")]
 		[RequireContext(ContextType.Guild)]

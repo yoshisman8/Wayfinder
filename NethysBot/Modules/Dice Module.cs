@@ -21,7 +21,7 @@ namespace NethysBot.Modules
 	{
 		// private Regex DiceRegex = new Regex(@"(\d?[dD]\d)+\s*((\+|\-|)?\s*(\d+)?)*"); TO BE DELETED
 		private Regex AttributeRegex = new Regex(@"(\{(\w+)\})");
-		private Regex BonusRegex = new Regex(@"\+?\-?\s?\d+");
+		private Regex BonusRegex = new Regex(@"[\+\-]+\s?\d+");
 
 		[Command("Roll"), Alias("R", "Dice")]
 		[Summary("Make a dice roll.")]
