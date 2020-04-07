@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -572,7 +573,7 @@ namespace NethysBot.Modules
 
 				if ((string)s["attack"] == "spell")
 				{
-					dmgtype = "Spell";
+					dmgtype = (string)s["overridedamage"] ?? "Magic";
 					var classes = await SheetService.Get(c, "classes");
 					JToken cl = null;
 					if (((string)s["class"]).NullorEmpty())
@@ -599,7 +600,7 @@ namespace NethysBot.Modules
 
 					int dc = int.Parse(hit ?? "0") + 10;
 
-					dmg = (string)s["overridedamage"];
+					dmg = (string)s["extradamage"];
 
 					if (!dmg.NullorEmpty() && AttributeRegex.IsMatch(dmg))
 					{
@@ -610,8 +611,7 @@ namespace NethysBot.Modules
 
 					var result = Roller.Roll("d20 + " + hit +(Bonuses.Length >0?string.Join(" ",Bonuses):""));
 
-					summary += "Spell Attack roll: " + result.ParseResult() + " = `" + result.Value + "`" +
-						"\nDC: `" + dc + "`";
+					summary += "**Spell Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
 
 					if (!((string)s["spell"]).NullorEmpty())
 					{
@@ -623,7 +623,7 @@ namespace NethysBot.Modules
 						}
 						if (!((string)sp["savingthrow"]).NullorEmpty())
 						{
-							summary += "\nSaving Throw: " + sp["savingthrow"];
+							summary += "\n**Saving Throw**: " + sp["savingthrow"]+ " (DC: `" + dc + "`";
 						}
 						embed.WithTitle(c.Name + " casts " + (sp["name"] ?? "Unnamed Spell") + "!");
 					}
@@ -631,15 +631,10 @@ namespace NethysBot.Modules
 					{
 						try
 						{
-							RollResult result2 = Roller.Roll(dmg + damagebonus);
+							RollResult result2 = Roller.Roll(dmg.ToLower() + damagebonus.ToLower());
 
-							summary += "\n" + dmgtype.Uppercase() + " damage: " + result2.ParseResult() + " = `" + result2.Value + "` ";
+							summary += "\n**" + dmgtype.Uppercase() + " damage**: " + result2.ParseResult() + " = `" + result2.Value + "` ";
 
-							if (!((string)s["extradamage"]).NullorEmpty())
-							{
-								RollResult result3 = Roller.Roll((string)s["extradamage"]);
-								summary += "\n" + ((string)s["overridedamage"]).Uppercase() + " damage: " + result3.ParseResult() + " = `" + result3.Value + "`";
-							}
 						}
 						catch
 						{
@@ -656,13 +651,118 @@ namespace NethysBot.Modules
 
 					await ReplyAsync(" ", embed.Build());
 				}
+				else if ((string)s["attack"] == "custom")
+				{
+					string summary = "";
+					if (!((string)s["weaponcustom"]).NullorEmpty())
+					{
+						embed.WithTitle(c.Name + " strikes with a " + s["weaponcustom"]);
+					}
+					if (!((string)s["damagetypecustom"]).NullorEmpty())
+					{
+						dmgtype = (string)s["damagetypecustom"];
+					}
+					if (!((string)s["traitscustom"]).NullorEmpty())
+					{
+						string[] traits = ((string)s["traitscustom"]).Split(',');
+						foreach (var x in traits)
+						{
+							summary += "[" + x.ToUpper() + "] ";
+						}
+						summary += "\n";
+					}
+					int range = 0;
+					if (!((string)s["range"]).NullorEmpty())
+					{
+						range += int.Parse((string)s["range"]);
+					}
+					if (!((string)s["modrange"]).NullorEmpty())
+					{
+						range += int.Parse((string)s["modrange"]);
+					}
+					summary += "**Range** " + range + "ft.\n";
+
+
+					if ((string)s["attackcustom"] == "melee" || ((string)s["attack"]).NullorEmpty())
+					{
+						hit = (string)values["melee " + (string)s["name"]]["bonus"];
+						penalties = (string)values["melee " + (string)s["name"]]["penalty"];
+					}
+					else
+					{
+						hit = (string)values["ranged " + (string)s["name"]]["bonus"];
+						penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
+					}
+
+					damagebonus = (string)values["damage " + (string)s["name"]]["value"];
+
+					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
+
+					
+
+					var result = Roller.Roll("d20 + " + hit + (penalties != "0" ? "-" + penalties : "") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
+
+					summary += "**Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
+
+					if (!dmg.NullorEmpty())
+					{
+						try
+						{
+							RollResult result2 = Roller.Roll(dmg + "+" + damagebonus);
+							summary += "\n**" + dmgtype.Uppercase() + " damage**: " + result2.ParseResult() + " = `" + result2.Value + "` ";
+
+							if (!((string)s["extradamage"]).NullorEmpty())
+							{
+								RollResult result3 = Roller.Roll((string)s["extradamage"]);
+								summary += "\n**" + ((string)s["overridedamage"]).Uppercase() + " damage**: " + result3.ParseResult() + " = `" + result3.Value + "`";
+							}
+						}
+						catch
+						{
+							await ReplyAsync("It seems like this strike doesn't have a valid dice roll on its damage or additional damage fields. If this is a spell make sure you have a valid dice expression on the damage fields.");
+							return;
+						}
+					}
+
+
+					embed.WithDescription(summary)
+						.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
+
+
+
+					await ReplyAsync(" ", embed.Build());
+
+				}
 				else
 				{
+					string summary = "";
 					if (!((string)s["weapon"]).NullorEmpty())
 					{
 						var items = await SheetService.Get(c, "items");
 						var i = items.First(x => (string)x["id"] == (string)s["weapon"]);
 						dmgtype = (string)i["damagetype"] ?? "Untyped";
+
+						if (!((string)i["traits"]).NullorEmpty())
+						{
+							string[] traits = ((string)i["traits"]).Split(',');
+							foreach(var x in traits)
+							{
+								summary += "[" + x.ToUpper() + "] ";
+							}
+							summary += "\n";
+						}
+
+
+						int range = 0;
+						if (!((string)i["range"]).NullorEmpty() && int.TryParse((string)i["range"], out int r))
+						{
+							range += r;
+						}
+						if (!((string)s["modrange"]).NullorEmpty() && int.TryParse((string)s["modrange"], out int r2))
+						{
+							range += r2;
+						}
+						summary += "**Range**: " + range + "ft.\n";
 					}
 					else
 					{
@@ -684,23 +784,23 @@ namespace NethysBot.Modules
 
 					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
 
-					string summary = "";
+					
 
 					var result = Roller.Roll("d20 + " + hit + (penalties != "0"? "-"+penalties:"") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
 
-					summary += "Attack roll: " + result.ParseResult() + " = `" + result.Value + "`";
+					summary += "**Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
 
 					if (!dmg.NullorEmpty())
 					{
 						try
 						{
 							RollResult result2 = Roller.Roll(dmg + "+" + damagebonus);
-							summary += "\n" + dmgtype.Uppercase() + " damage: " + result2.ParseResult() + " = `" + result2.Value + "` ";
+							summary += "\n**" + dmgtype.Uppercase() + " damage**: " + result2.ParseResult() + " = `" + result2.Value + "` ";
 
 							if (!((string)s["extradamage"]).NullorEmpty())
 							{
 								RollResult result3 = Roller.Roll((string)s["extradamage"]);
-								summary += "\n" + ((string)s["overridedamage"]).Uppercase() + " damage: " + result3.ParseResult() + " = `" + result3.Value + "`";
+								summary += "\n**" + ((string)s["overridedamage"]).Uppercase() + " damage**: " + result3.ParseResult() + " = `" + result3.Value + "`";
 							}
 						}
 						catch
