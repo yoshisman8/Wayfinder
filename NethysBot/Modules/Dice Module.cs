@@ -273,7 +273,7 @@ namespace NethysBot.Modules
 				return;
 			}
 			var embed = new EmbedBuilder();
-			JToken bonus = null;
+			int bonus = 0;
 			string message = "";
 			if (args.Contains("-f"))
 			{
@@ -285,15 +285,15 @@ namespace NethysBot.Modules
 				switch ((int)Throw)
 				{
 					case 1:
-						bonus = values["famfort " + c.Familiar]["bonus"] ?? 0;
+						bonus = (int)values["famfort " + c.Familiar]["bonus"] + (int)values["famfort "+c.Familiar]["penalty"];
 						message = c.Name + "'s familiar makes a fortitude check!";
 						break;
 					case 2:
-						bonus = values["famref " + c.Familiar]["bonus"] ?? 0;
+						bonus = (int)values["famref " + c.Familiar]["bonus"] + (int)values["famref "+c.Familiar]["penalty"];
 						message = c.Name + "'s familiar makes a reflex check!";
 						break;
 					case 3:
-						bonus = values["famwill " + c.Familiar]["bonus"] ?? 0;
+						bonus = (int)values["famwill " + c.Familiar]["bonus"] +(int)values["famwill "+c.Familiar]["penalty"];
 						message = c.Name + "'s familiar makes a will check!";
 						break;
 				}
@@ -305,15 +305,15 @@ namespace NethysBot.Modules
 				switch ((int)Throw)
 				{
 					case 1:
-						bonus = values["fortitude"]["bonus"] ?? 0;
+						bonus = (int)values["fortitude"]["bonus"] + (int)values["fortitude"]["penalty"];
 						message = c.Name + " makes a fortitude check!";
 						break;
 					case 2:
-						bonus = values["reflex"]["bonus"] ?? 0;
+						bonus = (int)values["reflex"]["bonus"] + (int)values["reflex"]["penalty"];
 						message = c.Name + " makes a reflex check!";
 						break;
 					case 3:
-						bonus = values["will"]["bonus"] ?? 0;
+						bonus = (int)values["will"]["bonus"] + (int)values["will"]["penalty"];
 						message = c.Name + " makes a will check!";
 						break;
 				}
