@@ -60,7 +60,7 @@ namespace NethysBot.Modules
 						b.Round = 0;
 						var embed = new EmbedBuilder().WithTitle("Roll for initiative!")
 							.WithDescription(Context.User.Username + " has started a new encounter!")
-							.AddField("Players", "Use the `!Initiative SkillName` command to enter initiative.\nYou can also use `!Initiative #` to add your initative number manually.",true)
+							.AddField("Players", "Use the `!Initiative SkillName` command to enter initiative.\nYou can also use `!Initiative #` to add your initiative number manually.",true)
 							.AddField("Director", "Use `!AddNPC Initaitve Name` to add NPCs to the turn order.",true)
 							.AddField("Ready to go?","Once all characters have been added, use the `!Encounter Start` command again to start the encounter.")
 							.AddField("Advancing Turns","Use `!next` to end your turn and ping the next person in the initiative order.")
@@ -105,9 +105,9 @@ namespace NethysBot.Modules
 				return;
 			}
 			var embed = new EmbedBuilder()
-				.WithTitle(c.Name + " Rolled initative!")
+				.WithTitle(c.Name + " Rolled initiative!")
 				.WithThumbnailUrl(c.ImageUrl)
-				.WithDescription("Initative: `" + number + "`");
+				.WithDescription("Initiative: `" + number + "`");
 
 			if (b.Participants.Any(x => x.Name.ToLower() == c.Name.ToLower()))
 			{
@@ -165,7 +165,7 @@ namespace NethysBot.Modules
 			}
 
 			var embed = new EmbedBuilder()
-				.WithTitle(c.Name + " Rolled initative!")
+				.WithTitle(c.Name + " Rolled initiative!")
 				.WithThumbnailUrl(c.ImageUrl);
 			var values = await SheetService.GetValues(c);
 			if (skill.NullorEmpty())
