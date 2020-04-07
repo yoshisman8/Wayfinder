@@ -194,7 +194,7 @@ namespace NethysBot.Helpers
 								sb.Append("- ");
 								break;
 							case SpecialDie.OpenParen:
-								sb.Append(") ");
+								sb.Append("( ");
 								break;
 							case SpecialDie.Subtract:
 								sb.Append("- ");
