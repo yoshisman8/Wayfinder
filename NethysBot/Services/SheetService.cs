@@ -19,6 +19,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Channels;
 using Newtonsoft.Json;
 using System.Runtime.ExceptionServices;
+using System.Xml;
 
 namespace NethysBot.Services
 {
@@ -892,8 +893,18 @@ namespace NethysBot.Services
 					}
 					sb.Append((s["name"] ?? "Unnamed Cantrip") + " " + act+", ");
 				}
-
-				embed.AddField("Cantrips ["+slots+"]", sb.ToString().TrimEnd().Substring(0, sb.Length-2));
+				if (sb.Length >= 1000)
+				{
+					var segments = sb.ToString().Split(1000).ToArray();
+					for (int sg = 0; sg < segments.Length; sg++)
+					{
+						embed.AddField(" Cantrips [" + slots + "]", segments[sg]);
+					}
+				}
+				else
+				{
+					embed.AddField("Cantrips [" + slots + "]", sb.ToString().TrimEnd().Substring(0, sb.Length - 2));
+				}
 				sb.Clear();
 			}
 
@@ -924,7 +935,18 @@ namespace NethysBot.Services
 					}
 					sb.Append((s["name"] ?? "Unnamed Spell") + " " + act+", ");
 				}
-				embed.AddField(i.ToPlacement() + " Level ["+slots+"]", sb.ToString().TrimEnd().Substring(0, sb.Length-2));
+				if(sb.Length >= 1000)
+				{
+					var segments = sb.ToString().Split(1000).ToArray();
+					for (int sg = 0; sg < segments.Length; sg++)
+					{
+						embed.AddField(i.ToPlacement() + " Level [" + slots + "]", segments[sg]);
+					}
+				}
+				else
+				{
+					embed.AddField(i.ToPlacement() + " Level ["+slots+"]", sb.ToString().TrimEnd().Substring(0, sb.Length-2));
+				}
 				sb.Clear();
 			}
 

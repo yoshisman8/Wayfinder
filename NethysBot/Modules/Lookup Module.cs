@@ -208,7 +208,7 @@ namespace NethysBot.Modules
 			return;
 		}
 
-		[Command("Spellbook"), Alias("Spells", "Spell")]
+		[Command("Spellbook"), Alias("Spells", "Spell","SB")]
 		[Summary("Lookup a spell your active character knows. Or list all of them if used with no arguments.")]
 		public async Task Spellbook([Remainder] string Name = null)
 		{
