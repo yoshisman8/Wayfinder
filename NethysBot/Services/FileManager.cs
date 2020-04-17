@@ -371,11 +371,11 @@ namespace NethysBot.Services
 		public EmbedBuilder EmbedItemSRD(JToken i)
 		{
 			var embed = new EmbedBuilder()
-				.WithTitle((string)i["name"] +" lv" +(string)i["level"]);
-			if (i["traits"] != null) embed.AddField("Traits", (string)i["traits"],true);
-			if (i["price"] != null) embed.AddField("Price", (string)i["price"] + (string)i["priceunit"], true);
-			if (i["bulk"] != null) embed.AddField("Bulk", (string)i["bulk"], true);
-			if (i["hands"] != null) embed.AddField("Hands", (string)i["hands"], true);
+				.WithTitle((string)i["name"] +" [Item" +((string)i["level"]??"0")+"]");
+			if (i["traits"] != null) embed.AddField("Traits", ((string)i["traits"]).NullorEmpty()?" - ":(string)i["traits"],true);
+			if (i["price"] != null) embed.AddField("Price", (((string)i["price"]).NullorEmpty() ? " - " : (string)i["price"]) + (((string)i["priceunit"]).NullorEmpty() ? " - " : (string)i["priceunit"]), true);
+			if (i["bulk"] != null) embed.AddField("Bulk", ((string)i["bulk"]).NullorEmpty() ? " - " : (string)i["bulk"], true);
+			if (i["hands"] != null) embed.AddField("Hands", ((string)i["hands"]).NullorEmpty() ? " - " : (string)i["hands"], true);
 
 
 			var sb = new StringBuilder();
