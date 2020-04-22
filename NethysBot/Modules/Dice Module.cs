@@ -447,7 +447,7 @@ namespace NethysBot.Modules
 			if (args.Contains("-c"))
 			{
 				c = GetCompanion();
-				args = args.Replace("-c", "");
+				args = args.Replace("-c", "").Trim();
 				if (c == null)
 				{
 					await ReplyAsync("You have no active companion.");
