@@ -713,7 +713,12 @@ namespace NethysBot.Modules
 
 							if (!((string)s["extradamage"]).NullorEmpty())
 							{
-								RollResult result3 = Roller.Roll((string)s["extradamage"]);
+								string extra = (string)s["extradamage"];
+								if (AttributeRegex.IsMatch(dmg))
+								{
+									extra = await ParseValues(extra, c, values);
+								}
+								RollResult result3 = Roller.Roll(extra);
 								summary += "\n**" + ((string)s["overridedamage"]).Uppercase() + " damage**: " + result3.ParseResult() + " = `" + result3.Value + "`";
 							}
 						}
@@ -799,7 +804,12 @@ namespace NethysBot.Modules
 
 							if (!((string)s["extradamage"]).NullorEmpty())
 							{
-								RollResult result3 = Roller.Roll((string)s["extradamage"]);
+								string extra = (string)s["extradamage"];
+								if (AttributeRegex.IsMatch(dmg))
+								{
+									extra = await ParseValues(extra, c, values);
+								}
+								RollResult result3 = Roller.Roll(extra);
 								summary += "\n**" + ((string)s["overridedamage"]).Uppercase() + " damage**: " + result3.ParseResult() + " = `" + result3.Value + "`";
 							}
 						}
