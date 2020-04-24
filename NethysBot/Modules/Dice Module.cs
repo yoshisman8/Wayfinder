@@ -623,7 +623,7 @@ namespace NethysBot.Modules
 						}
 						if (!((string)sp["savingthrow"]).NullorEmpty())
 						{
-							summary += "\n**Saving Throw**: " + sp["savingthrow"]+ " (DC: `" + dc + "`";
+							summary += "\n**Saving Throw**: " + sp["savingthrow"]+ " (DC: `" + dc + "`)";
 						}
 						embed.WithTitle(c.Name + " casts " + (sp["name"] ?? "Unnamed Spell") + "!");
 					}
