@@ -714,7 +714,7 @@ namespace NethysBot.Modules
 							if (!((string)s["extradamage"]).NullorEmpty())
 							{
 								string extra = (string)s["extradamage"];
-								if (AttributeRegex.IsMatch(dmg))
+								if (AttributeRegex.IsMatch(extra))
 								{
 									extra = await ParseValues(extra, c, values);
 								}
@@ -805,7 +805,7 @@ namespace NethysBot.Modules
 							if (!((string)s["extradamage"]).NullorEmpty())
 							{
 								string extra = (string)s["extradamage"];
-								if (AttributeRegex.IsMatch(dmg))
+								if (AttributeRegex.IsMatch(extra))
 								{
 									extra = await ParseValues(extra, c, values);
 								}
