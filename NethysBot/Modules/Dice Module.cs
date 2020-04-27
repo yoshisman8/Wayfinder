@@ -178,7 +178,7 @@ namespace NethysBot.Modules
 							message = c.Name + "'s familiar makes an Acrobatics check!";
 							break;
 						case "stealth":
-							bonus = (int)values["famstealth " + c.Familiar]["bonus"] - (int)values["famstealth " + c.Familiar]["penalty"];
+							bonus = (int)values["famstealth " + c.Familiar]["bonus"] - (int)values["feamstealth " + c.Familiar]["penalty"];
 							message = c.Name + "'s familiar makes a Stealth check!";
 							break;
 						default:

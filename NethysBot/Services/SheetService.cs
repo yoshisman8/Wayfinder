@@ -564,7 +564,7 @@ namespace NethysBot.Services
 			var json = JObject.Parse(responsebody);
 			var json2 = JObject.Parse(responsebody2);
 
-			if (!json["data"].HasValues) return null;
+			if (!json["data"].HasValues && !json2["data"].HasValues) return null;
 
 			var features = from fs in json["data"]
 						   where ((string)fs["name"]).ToLower().StartsWith(name.ToLower())
