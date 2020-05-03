@@ -29,7 +29,7 @@ namespace NethysBot.Models
 		{
 			get
 			{
-				if(TiebreakerOrder == -1)
+				if(TiebreakerOrder == 0)
 				{
 					return Initiative.ToString();
 				}
