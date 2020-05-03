@@ -22,6 +22,23 @@ namespace NethysBot.Models
 	{
 		public string Name { get; set; }
 		public float Initiative { get; set; }
+		public int TiebreakerOrder { get; set; }
 		public ulong Player { get; set; }
+
+		public string InitiativeReadout
+		{
+			get
+			{
+				if(TiebreakerOrder == -1)
+				{
+					return Initiative.ToString();
+				}
+				else
+				{
+					return Initiative.ToString() + "-" + TiebreakerOrder.ToString();
+				} 
+					
+			}
+		}
 	}
 }
