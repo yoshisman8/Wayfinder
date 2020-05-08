@@ -574,8 +574,17 @@ namespace NethysBot.Modules
 				if ((string)s["attack"] == "spell")
 				{
 					dmgtype = (string)s["overridedamage"] ?? "Magic";
-					var classes = await SheetService.Get(c, "classes");
 					JToken cl = null;
+
+					var classes = await SheetService.Get(c, "classes");
+					var traditions = await SheetService.Get(c, "traditions");
+
+					classes.Merge(traditions);
+					if (classes == null || classes.Count == 0)
+					{
+						await ReplyAsync("You don't seem to have a class. Without one you can't make spell attacks.");
+						return;
+					}
 					if (((string)s["class"]).NullorEmpty())
 					{
 						cl = classes.FirstOrDefault();
@@ -584,11 +593,8 @@ namespace NethysBot.Modules
 					{
 						cl = classes.First(x => (string)x["id"] == (string)s["class"]);
 					}
-					if (classes == null || classes.Count == 0)
-					{
-						await ReplyAsync("You don't seem to have a class. Without one you can't make spell attacks.");
-						return;
-					}
+
+					
 
 					if (!values.ContainsKey(((string)cl["name"]).ToLower()))
 					{

@@ -784,6 +784,10 @@ namespace NethysBot.Services
 			reqclasses.EnsureSuccessStatusCode();
 			string resclasses = await reqclasses.Content.ReadAsStringAsync();
 
+			var reqclasses2 = await Client.GetAsync(Api + c.RemoteId + "/classes");
+			reqclasses2.EnsureSuccessStatusCode();
+			string resclasses2 = await reqclasses2.Content.ReadAsStringAsync();
+
 			var reqvalues = await Client.GetAsync(Api + c.RemoteId + "/values");
 			reqvalues.EnsureSuccessStatusCode();
 			string resvalues = await reqvalues.Content.ReadAsStringAsync();
@@ -791,6 +795,8 @@ namespace NethysBot.Services
 
 			var jsonspells = JObject.Parse(respspell);
 			var json = JObject.Parse(resclasses);
+			var json2 = JObject.Parse(resclasses2);
+			json.Merge(json2, new JsonMergeSettings { MergeArrayHandling = MergeArrayHandling.Union });
 			var values = JObject.Parse(resvalues)["data"];
 
 			if (values == null || !values.HasValues)
@@ -819,6 +825,12 @@ namespace NethysBot.Services
 			foreach (var cl in classes)
 			{
 				if (values[((string)cl["name"]).ToLower()] == null) continue;
+				bool skip = true;
+				for(int i = 0;i <= 10;i++)
+				{
+					if ((int)cl["spell" + i] > 0) skip = false;
+				}
+				if (skip) continue;
 				string ability = ((string)cl["ability"]).NullorEmpty() ? "" : Icons.Scores[(string)cl["ability"]] + " ";
 
 				sb.AppendLine(ability + ((string)cl["tradition"]).Uppercase()+ " " + Icons.Proficiency[(string)cl["proficiency"]]);
