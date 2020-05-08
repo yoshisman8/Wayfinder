@@ -780,7 +780,7 @@ namespace NethysBot.Services
 			reqspell.EnsureSuccessStatusCode();
 			string respspell = await reqspell.Content.ReadAsStringAsync();
 
-			var reqclasses = await Client.GetAsync(Api + c.RemoteId + "/classes");
+			var reqclasses = await Client.GetAsync(Api + c.RemoteId + "/traditions");
 			reqclasses.EnsureSuccessStatusCode();
 			string resclasses = await reqclasses.Content.ReadAsStringAsync();
 
@@ -818,10 +818,11 @@ namespace NethysBot.Services
 
 			foreach (var cl in classes)
 			{
+				if (values[((string)cl["name"]).ToLower()] == null) continue;
 				string ability = ((string)cl["ability"]).NullorEmpty() ? "" : Icons.Scores[(string)cl["ability"]] + " ";
 
 				sb.AppendLine(ability + ((string)cl["tradition"]).Uppercase()+ " " + Icons.Proficiency[(string)cl["proficiency"]]);
-				sb.AppendLine("Spell Attack `" + ((int)(values?[((string)cl["name"]).ToLower()]["bonus"]??0)).ToModifierString() + "`");
+				sb.AppendLine("Spell Attack `" + ((int)(values[((string)cl["name"]).ToLower()]["bonus"]??0)).ToModifierString() + "`");
 				sb.AppendLine("DC `" + (values?[((string)cl["name"]).ToLower()]["value"]??"Unknown") + "`");
 
 				embed.AddField(((string)cl["name"]??"Unnamed class"), sb.ToString(),true);
