@@ -43,7 +43,7 @@ namespace NethysBot.Modules
 							await ReplyAsync("There are no participants on this encounter!");
 							return;
 						}
-						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x => x.TiebreakerOrder).Reverse().ToList();
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x => x.Tiebreaker).Reverse().ToList();
 						b.CurrentTurn = b.Participants.First();
 						b.Started = true;
 						b.Round = 1;
@@ -54,6 +54,8 @@ namespace NethysBot.Modules
 					else
 					{
 						b.Participants = new List<Participant>();
+						b.Effects = new List<BattleEffect>();
+						b.LapsedEffects = new List<LapsedEffect>();
 						b.Director = Context.User.Id;
 						b.Active = true;
 						b.Started = false;
@@ -80,6 +82,8 @@ namespace NethysBot.Modules
 						b.Active = false;
 						b.Started = false;
 						b.Participants = new List<Participant>();
+						b.Effects = new List<BattleEffect>();
+						b.LapsedEffects = new List<LapsedEffect>();
 						b.Round = 0;
 						UpdateBattle(b);
 						await ReplyAsync("Encounter over!");
@@ -121,14 +125,14 @@ namespace NethysBot.Modules
 			if (b.Participants.Any(x => x.Name.ToLower() == c.Name.ToLower()))
 			{
 				var i = b.Participants.FindIndex(x => x.Name.ToLower() == c.Name.ToLower());
-				b.Participants[i] = new Participant() { Initiative = number, TiebreakerOrder = tiebreaker, Name = c.Name, Player = c.Owner };
-				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x=> x.TiebreakerOrder).Reverse().ToList();
+				b.Participants[i] = new Participant() { Initiative = number, Tiebreaker = tiebreaker, Name = c.Name, Player = c.Owner };
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 				UpdateBattle(b);
 			}
 			else
 			{
-				b.Participants.Add(new Participant() { Initiative = number, TiebreakerOrder = tiebreaker, Name = c.Name, Player = c.Owner });
-				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x=> x.TiebreakerOrder).Reverse().ToList();
+				b.Participants.Add(new Participant() { Initiative = number, Tiebreaker = tiebreaker, Name = c.Name, Player = c.Owner });
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 				UpdateBattle(b);
 			}
 
@@ -192,14 +196,14 @@ namespace NethysBot.Modules
 					if (b.Participants.Any(x => x.Name.ToLower() == c.Name.ToLower()))
 					{
 						var i = b.Participants.FindIndex(x => x.Name.ToLower() == c.Name.ToLower());
-						b.Participants[i] = new Participant() { Initiative = (int)results.Value, TiebreakerOrder = 0, Name = c.Name, Player = c.Owner };
-						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x=> x.TiebreakerOrder).Reverse().ToList();
+						b.Participants[i] = new Participant() { Initiative = (int)results.Value, Tiebreaker = 0, Name = c.Name, Player = c.Owner };
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 						UpdateBattle(b);
 					}
 					else
 					{
-						b.Participants.Add(new Participant() { Initiative = (int)results.Value, TiebreakerOrder = 0, Name = c.Name, Player = c.Owner });
-						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x=> x.TiebreakerOrder).Reverse().ToList();
+						b.Participants.Add(new Participant() { Initiative = (int)results.Value, Tiebreaker = 0, Name = c.Name, Player = c.Owner });
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 						UpdateBattle(b);
 					}
 				}
@@ -237,14 +241,14 @@ namespace NethysBot.Modules
 					if (b.Participants.Any(x => x.Name.ToLower() == c.Name.ToLower()))
 					{
 						var i = b.Participants.FindIndex(x => x.Name.ToLower() == c.Name.ToLower());
-						b.Participants[i] = new Participant() { Initiative = (int)results.Value, TiebreakerOrder = 0, Name = c.Name, Player = c.Owner };
-						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x=> x.TiebreakerOrder).Reverse().ToList();
+						b.Participants[i] = new Participant() { Initiative = (int)results.Value, Tiebreaker = 0, Name = c.Name, Player = c.Owner };
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 						UpdateBattle(b);
 					}
 					else
 					{
-						b.Participants.Add(new Participant() { Initiative = (int)results.Value, TiebreakerOrder = 0, Name = c.Name, Player = c.Owner });
-						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x=> x.TiebreakerOrder).Reverse().ToList();
+						b.Participants.Add(new Participant() { Initiative = (int)results.Value, Tiebreaker = 0, Name = c.Name, Player = c.Owner });
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 						UpdateBattle(b);
 					}
 				}
@@ -292,15 +296,15 @@ namespace NethysBot.Modules
 			if (b.Participants.Any(x => x.Name.ToLower() == Name.ToLower()))
 			{
 				var i = b.Participants.FindIndex(x => x.Name.ToLower() == Name.ToLower());
-				b.Participants[i] = new Participant() { Initiative = initiative, TiebreakerOrder = tiebreaker, Name = Name, Player = b.Director };
-				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x => x.TiebreakerOrder).Reverse().ToList();
+				b.Participants[i] = new Participant() { Initiative = initiative, Tiebreaker = tiebreaker, Name = Name, Player = b.Director };
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x => x.Tiebreaker).Reverse().ToList();
 				UpdateBattle(b);
 				await ReplyAsync("Changed \"" + Name + "\"'s Initiative to `" + initiative + "`.");
 			}
 			else
 			{
-				b.Participants.Add(new Participant() { Initiative = initiative, TiebreakerOrder = tiebreaker, Name = Name, Player = b.Director });
-				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x => x.TiebreakerOrder).Reverse().ToList();
+				b.Participants.Add(new Participant() { Initiative = initiative, Tiebreaker = tiebreaker, Name = Name, Player = b.Director });
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x => x.Tiebreaker).Reverse().ToList();
 				UpdateBattle(b);
 				await ReplyAsync("Added NPC \"" + Name + "\" to the encounter with initiative `" + initiative + "`.");
 			}
@@ -365,7 +369,7 @@ namespace NethysBot.Modules
 
 						var p = pars[index];
 						b.Participants.Remove(p);
-						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x=> x.TiebreakerOrder).Reverse().ToList();
+						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 						if (p.Name == b.CurrentTurn.Name)
 						{
 							b.CurrentTurn = b.Participants.FirstOrDefault();
@@ -380,7 +384,7 @@ namespace NethysBot.Modules
 			{
 				var p = pars.FirstOrDefault();
 				b.Participants.Remove(p);
-				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenByDescending(x=> x.TiebreakerOrder).Reverse().ToList();
+				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 				if (p.Name == b.CurrentTurn.Name)
 				{
 					b.CurrentTurn = b.Participants.FirstOrDefault();
@@ -428,6 +432,104 @@ namespace NethysBot.Modules
 			}
 			await NextTurn(b, Context);
 		}
+
+		[Command("RemoveEffect")]
+		[RequireContext(ContextType.Guild)]
+		public async Task RemoveEffect(string name, params string[] targetsArr)
+		{
+
+			var b = GetBattle(Context.Channel.Id);
+			if (!b.Active)
+			{
+				await ReplyAsync("There is no encounter happening on this channel. Start one with `!Encounter Start`");
+				return;
+			}
+
+			//the targetsArr param is split into space-delimited entries UNLESS those spaces are within " ".
+			List<string> validTargets = new List<string>();
+
+			var targetsLower = targetsArr.Select(s => s.ToLower());
+
+			//for each target, remove effects
+			var effectsToRemove = b.Effects.FindAll(x => x.Name == name && targetsLower.Contains(x.HostCharacter.ToLower()));
+			foreach(BattleEffect be in effectsToRemove)
+			{
+				b.Effects.Remove(be);
+				validTargets.Add(be.HostCharacter);
+			}
+
+			if(validTargets.Any())
+			{
+				UpdateBattle(b);
+				await ReplyAsync("\""+name+"\" removed from: "+ string.Join(" ,",validTargets));
+			}
+			else
+			{
+				await ReplyAsync("No valid effects found to remove, or no valid targets found to remove from.");
+			}
+		}
+
+		[Command("AddEffect")]
+		[RequireContext(ContextType.Guild)]
+		public async Task AddEffect(string name, int duration, params string[] targetsArr)
+		{
+			//the targetsArr param is split into space-delimited entries UNLESS those spaces are within " ".
+			List<string> badTargets = new List<string>();
+			List<string> validTargets = new List<string>();
+			bool didModify = false;
+
+			var b = GetBattle(Context.Channel.Id);
+			if (!b.Active)
+			{
+				await ReplyAsync("There is no encounter happening on this channel. Start one with `!Encounter Start`");
+				return;
+			}
+			//for each target, add effects
+			foreach(string target in targetsArr)
+			{
+				if(b.Participants.Any(x => x.Name.ToLower() == target.ToLower()))
+				{
+					//look for the named effect on the target.
+					int ind = b.Effects.FindIndex(x => x.Name == name && x.HostCharacter == target.ToLower());
+					if(ind == -1)
+					{
+						//new effect, add it
+						b.Effects.Add( new BattleEffect() { Duration = duration, IsEndOfTurn = true, Name = name, HostCharacter = target.ToLower() });
+					}
+					else
+					{
+						//existing effect, update it
+						b.Effects[ind] = new BattleEffect() { Duration = duration, IsEndOfTurn = true, Name = name, HostCharacter = target.ToLower() };
+						didModify = true;
+					}
+					validTargets.Add(target);
+				}
+				else
+				{
+					//invalid target. Store to inform the user.
+					badTargets.Add(target);
+				}
+			}
+
+			if (validTargets.Count > 0)
+			{
+				string response = string.Format("{0} Effect \"{1}\" to {2} with duration of {3} round(s). {4}",
+												didModify ? "Updated" : "Added",
+												name,
+												validTargets.Count > 1 ? "multiple characters" : validTargets[0],
+												duration,
+												badTargets.Count == 0 ? "" : Environment.NewLine + "Invalid targets: "+string.Join(", ", badTargets));
+
+				UpdateBattle(b);
+				await ReplyAsync(response);
+			}
+			else
+			{
+				
+				await ReplyAsync("No valid targets found to Add Effect. Invalid targets: " + string.Join(", ", badTargets));
+			}
+		}
+
 		private Battle GetBattle(ulong channel)
 		{
 			var col = Database.GetCollection<Battle>("Battles");
@@ -451,6 +553,7 @@ namespace NethysBot.Modules
 			var col = Database.GetCollection<Battle>("Battles");
 			col.Update(b);
 		}
+
 		public async Task CurrentTurn(Battle b, SocketCommandContext context)
 		{
 			var channel = context.Guild.GetTextChannel(b.Channel);
@@ -466,19 +569,54 @@ namespace NethysBot.Modules
 				await channel.SendMessageAsync(player.Mention + ", " + b.CurrentTurn.Name + "'s turn!", false, DisplayBattle(b, context));
 			}
 		}
-		public async Task NextTurn(Battle B, SocketCommandContext context)
+		public async Task NextTurn(Battle b, SocketCommandContext context)
 		{
-			int i = B.Participants.IndexOf(B.CurrentTurn);
-
-			if (i + 1 >= B.Participants.Count)
+			int i = b.Participants.IndexOf(b.CurrentTurn);
+			string prevName = b.CurrentTurn.Name;
+			//remove durative effect notices from last turn
+			b.LapsedEffects.Clear();
+			
+			if (i + 1 >= b.Participants.Count)
 			{
-				B.CurrentTurn = B.Participants.First();
-				B.Round++;
+				b.CurrentTurn = b.Participants.First();
+				b.Round++;
+				
 			}
-			else B.CurrentTurn = B.Participants[i + 1];
-			UpdateBattle(B);
-			await CurrentTurn(B, context);
+			else
+			{
+				b.CurrentTurn = b.Participants[i + 1];
+			}
+
+			string currName = b.CurrentTurn.Name;
+			//find all effects that ended on this round ||
+			//find all effects that end start of next round
+			var progressingEffects = b.Effects.FindAll(ef => (ef.HostCharacter.Equals(prevName.ToLower()) && ef.IsEndOfTurn == true) ||
+														     (ef.HostCharacter.Equals(currName.ToLower()) && ef.IsStartOfTurn == true));
+			elapseEffects(b, progressingEffects);
+
+			UpdateBattle(b);
+			await CurrentTurn(b, context);
 		}
+
+		private static void elapseEffects(Battle b, List<BattleEffect> progressingEffects)
+		{
+			foreach (BattleEffect eff in progressingEffects)
+			{
+				int ind = b.Effects.IndexOf(eff);
+				b.Effects[ind] = eff.ElapseRound();
+			}
+
+			var toBeRemoved = b.Effects.FindAll(eff => eff.Duration == 0);
+			foreach(BattleEffect eff in toBeRemoved)
+			{
+				b.Effects.Remove(eff);
+			}
+
+			var durativeEffects = progressingEffects.FindAll(x => x.Duration == 1).Select(s => new LapsedEffect() {Name = s.Name, HostCharacter = s.HostCharacter });
+
+			if (durativeEffects.Count() > 0) b.LapsedEffects.AddRange(durativeEffects);
+		}
+
 		private Embed DisplayBattle(Battle b, SocketCommandContext context)
 		{
 			if (!b.Active)
@@ -486,10 +624,22 @@ namespace NethysBot.Modules
 				return new EmbedBuilder().WithDescription("No encounter is currently being ran on this room.").Build();
 			}
 
+			//check for lapsedEffects
+			var lapsedEffects = b.LapsedEffects;
+			string elapsedEffects = "";
+			if(lapsedEffects.Count > 0)
+			{
+				foreach (LapsedEffect le in lapsedEffects)
+				{
+					elapsedEffects += Environment.NewLine + le.HostCharacter + "'s \"" + le.Name + "\" has expired!";
+				}
+			}
+
+
 			var embed = new EmbedBuilder()
 				.WithTitle("Encounter")
-				.WithDescription("Started? " + (b.Started ? "Yes" : "No") +
-				"\nRound: `" + b.Round + "`")
+				.WithDescription("Started? " + (b.Started ? "Yes" : "No") + Environment.NewLine +
+				"Round: `" + b.Round + "`" + elapsedEffects)
 				.AddField("Game Master", context.Client.GetUser(b.Director).Mention, true);
 			var summary = new StringBuilder();
 			foreach (var p in b.Participants)
@@ -500,6 +650,19 @@ namespace NethysBot.Modules
 			if (summary.ToString().NullorEmpty()) summary.AppendLine("No participants");
 
 			embed.AddField("Participants", summary.ToString(), true);
+			//only add effects if they're present on the current character
+			if (b.Effects.Any(x => x.HostCharacter == b.CurrentTurn.Name.ToLower()))
+			{
+				var activeEffects = b.Effects.FindAll(x => x.HostCharacter == b.CurrentTurn.Name.ToLower());
+				var effectDetails = new StringBuilder();
+				foreach (var eff in activeEffects)
+				{
+					string roundString = (eff.Duration == 1) ? "round" : "rounds";
+					effectDetails.AppendLine(eff.Name + " (" + eff.Duration + " " + roundString + " remaining)");
+				}
+
+				embed.AddField("Active Effects", effectDetails.ToString(), true);
+			}
 
 			Random randonGen = new Random();
 			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
