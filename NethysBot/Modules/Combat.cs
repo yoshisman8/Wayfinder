@@ -368,14 +368,7 @@ namespace NethysBot.Modules
 						}
 
 						var p = pars[index];
-						b.Participants.Remove(p);
-						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
-						if (p.Name == b.CurrentTurn.Name)
-						{
-							b.CurrentTurn = b.Participants.FirstOrDefault();
-						}
-						UpdateBattle(b);
-						await ReplyAsync(p.Name + " has been removed form initiative.");
+						await removeParticipantFromBattle(b, p);
 						return;
 					}
 				}
@@ -383,17 +376,28 @@ namespace NethysBot.Modules
 			else
 			{
 				var p = pars.FirstOrDefault();
-				b.Participants.Remove(p);
-				b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
-				if (p.Name == b.CurrentTurn.Name)
-				{
-					b.CurrentTurn = b.Participants.FirstOrDefault();
-				}
-				UpdateBattle(b);
-				await ReplyAsync(p.Name + " has been removed form initiative.");
+				await removeParticipantFromBattle(b, p);
 				return;
 			}
 		}
+
+		private async Task removeParticipantFromBattle(Battle b, Participant p)
+		{
+			b.Participants.Remove(p);
+			b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x => x.Tiebreaker).Reverse().ToList();
+			if (p.Name == b.CurrentTurn.Name)
+			{
+				b.CurrentTurn = b.Participants.FirstOrDefault();
+			}
+			//remove any effects owned by the removed participant.
+			foreach (BattleEffect be in b.Effects.FindAll(x => x.HostCharacter == p.Name.ToLower()))
+			{
+				b.Effects.Remove(be);
+			}
+			UpdateBattle(b);
+			await ReplyAsync(p.Name + " has been removed form initiative.");
+		}
+
 		[Command("ForceEnd")]
 		[RequireUserPermission(ChannelPermission.ManageMessages)]
 		[RequireContext(ContextType.Guild)]
@@ -448,10 +452,12 @@ namespace NethysBot.Modules
 			//the targetsArr param is split into space-delimited entries UNLESS those spaces are within " ".
 			List<string> validTargets = new List<string>();
 
+
 			var targetsLower = targetsArr.Select(s => s.ToLower());
 
 			//for each target, remove effects
-			var effectsToRemove = b.Effects.FindAll(x => x.Name == name && targetsLower.Contains(x.HostCharacter.ToLower()));
+			//if no targets, remove all matching effects
+			var effectsToRemove = targetsLower.Count() > 1 ? b.Effects.FindAll(x => x.Name == name && targetsLower.Contains(x.HostCharacter.ToLower())) : b.Effects.FindAll(x => x.Name == name);
 			foreach(BattleEffect be in effectsToRemove)
 			{
 				b.Effects.Remove(be);
@@ -606,7 +612,7 @@ namespace NethysBot.Modules
 				b.Effects[ind] = eff.ElapseRound();
 			}
 
-			var toBeRemoved = b.Effects.FindAll(eff => eff.Duration == 0);
+			var toBeRemoved = b.Effects.FindAll(eff => eff.Duration <= 0);
 			foreach(BattleEffect eff in toBeRemoved)
 			{
 				b.Effects.Remove(eff);
