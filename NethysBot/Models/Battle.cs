@@ -16,26 +16,66 @@ namespace NethysBot.Models
 		public ulong Director { get; set; }
 		public int Round { get; set;  }
 		public List<Participant> Participants { get; set; } = new List<Participant>();
+		public List<BattleEffect> Effects { get; set; } = new List<BattleEffect>();
+		//these are effects that dropped off after the last turn or the start of the current one.
+		public List<LapsedEffect> LapsedEffects { get; set; } = new List<LapsedEffect>();
 		public Participant CurrentTurn { get; set; }
 	}
+
+	public struct LapsedEffect
+	{
+		public string Name { get; set; }
+		public string HostCharacter { get; set; }
+	}
+
+	public struct BattleEffect
+	{
+		public string Name { get; set; }
+		public int Duration { get; set; }
+		public string HostCharacter { get; set; }
+		public bool IsEndOfTurn { get; set; }
+		public bool IsStartOfTurn
+		{
+			get
+			{
+				return !IsEndOfTurn;
+			}
+			set
+			{
+				IsEndOfTurn = !value;
+			}
+		}
+
+		internal BattleEffect ElapseRound()
+		{
+			return new BattleEffect()
+			{
+				Duration = this.Duration - 1,
+				HostCharacter = this.HostCharacter,
+				Name = this.Name,
+				IsEndOfTurn = this.IsEndOfTurn
+			};
+		}
+	}
+
 	public struct Participant
 	{
 		public string Name { get; set; }
 		public float Initiative { get; set; }
-		public int TiebreakerOrder { get; set; }
+		public int Tiebreaker { get; set; }
 		public ulong Player { get; set; }
 
 		public string InitiativeReadout
 		{
 			get
 			{
-				if(TiebreakerOrder == 0)
+				if(Tiebreaker == 0)
 				{
 					return Initiative.ToString();
 				}
 				else
 				{
-					return Initiative.ToString() + "-" + TiebreakerOrder.ToString();
+					return Initiative.ToString() + "-" + Tiebreaker.ToString();
 				} 
 					
 			}
