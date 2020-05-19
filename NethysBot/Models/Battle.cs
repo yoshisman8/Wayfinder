@@ -30,6 +30,9 @@ namespace NethysBot.Models
 
 	public struct BattleEffect
 	{
+		public const string AllPlayers = "players";
+		public const string AllNpcs = "npcs";
+
 		public string Name { get; set; }
 		public int Duration { get; set; }
 		public string HostCharacter { get; set; }
