@@ -490,22 +490,48 @@ namespace NethysBot.Modules
 				await ReplyAsync("There is no encounter happening on this channel. Start one with `!Encounter Start`");
 				return;
 			}
+			//if targetsArr matches "players" or "npcs", add all players or npcs to the target array.
+			List<string> targetsList = new List<string>(targetsArr);
+			if(targetsList.Find(s => s.ToLower() == BattleEffect.AllPlayers) != null)
+			{
+				foreach(Participant p in b.Participants.FindAll(p => p.Player != b.Director))
+				{
+					targetsList.Add(p.Name);
+				}
+				targetsList.Remove(BattleEffect.AllPlayers);
+			}
+			if (targetsList.Find(s => s.ToLower() == BattleEffect.AllNpcs) != null)
+			{
+				foreach (Participant p in b.Participants.FindAll(p => p.Player == b.Director))
+				{
+					targetsList.Add(p.Name);
+				}
+				targetsList.Remove(BattleEffect.AllNpcs);
+			}
+			targetsList = targetsList.Distinct().ToList();
+
+			string activeChar = b.CurrentTurn.Name?.ToLower() ?? "";
+			
 			//for each target, add effects
-			foreach(string target in targetsArr)
+			foreach(string target in targetsList)
 			{
 				if(b.Participants.Any(x => x.Name.ToLower() == target.ToLower()))
 				{
+					//if the current turn is the creator of the effect, add an extra turn to the duration.
+					//End of Next Turn is duration 1 for everyone except the caster, where it is 2.
+					int modDuration = activeChar == target.ToLower() ? duration + 1 : duration;
+
 					//look for the named effect on the target.
 					int ind = b.Effects.FindIndex(x => x.Name == name && x.HostCharacter == target.ToLower());
 					if(ind == -1)
 					{
 						//new effect, add it
-						b.Effects.Add( new BattleEffect() { Duration = duration, IsEndOfTurn = true, Name = name, HostCharacter = target.ToLower() });
+						b.Effects.Add( new BattleEffect() { Duration = modDuration, IsEndOfTurn = true, Name = name, HostCharacter = target.ToLower() });
 					}
 					else
 					{
 						//existing effect, update it
-						b.Effects[ind] = new BattleEffect() { Duration = duration, IsEndOfTurn = true, Name = name, HostCharacter = target.ToLower() };
+						b.Effects[ind] = new BattleEffect() { Duration = modDuration, IsEndOfTurn = true, Name = name, HostCharacter = target.ToLower() };
 						didModify = true;
 					}
 					validTargets.Add(target);
@@ -657,7 +683,7 @@ namespace NethysBot.Modules
 
 			embed.AddField("Participants", summary.ToString(), true);
 			//only add effects if they're present on the current character
-			if (b.Effects.Any(x => x.HostCharacter == b.CurrentTurn.Name.ToLower()))
+			if (b.Effects.Any(x => x.HostCharacter == b.CurrentTurn.Name?.ToLower()))
 			{
 				var activeEffects = b.Effects.FindAll(x => x.HostCharacter == b.CurrentTurn.Name.ToLower());
 				var effectDetails = new StringBuilder();
