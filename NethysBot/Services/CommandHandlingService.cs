@@ -14,6 +14,9 @@ using NethysBot.Models;
 using Discord.Net.Udp;
 using System.Reflection.Metadata;
 using LiteDB;
+using System.Security.Cryptography;
+using System.Linq;
+using NethysBot.Helpers;
 
 namespace NethysBot.Services
 {
@@ -25,6 +28,7 @@ namespace NethysBot.Services
 		private readonly IConfiguration _config;
 		private readonly LoggingService _logService;
 		private LiteDatabase _database;
+		private Regex inlinereged = new Regex(@"\[\[(.+)\]\]");
 
 		public Dictionary<ulong, ulong> Cache { get; set; } = new Dictionary<ulong, ulong>();
 		public CommandHandlingService(LoggingService Logger, IConfiguration config, IServiceProvider provider, DiscordSocketClient discord, CommandService commands, LiteDatabase database)
@@ -96,7 +100,11 @@ namespace NethysBot.Services
 
 			if(context.Guild == null)
 			{
-				if (!message.HasStringPrefix(_config["prefix"], ref argPos) && !message.HasMentionPrefix(_discord.CurrentUser, ref argPos)) return;
+				if (!message.HasStringPrefix(_config["prefix"], ref argPos) && !message.HasMentionPrefix(_discord.CurrentUser, ref argPos)) 
+				{
+					await HandleInline(context);
+					return; 
+				}
 
 				await HandleCommand(context, argPos, _provider);
 			}
@@ -104,7 +112,11 @@ namespace NethysBot.Services
 			{
 				var Guild = GetOrCreateServer(context.Guild.Id);
 
-				if (!message.HasStringPrefix(Guild.Prefix, ref argPos) && !message.HasMentionPrefix(_discord.CurrentUser, ref argPos)) return;
+				if (!message.HasStringPrefix(Guild.Prefix, ref argPos) && !message.HasMentionPrefix(_discord.CurrentUser, ref argPos))
+				{
+					await HandleInline(context);
+					return;
+				}
 
 				await HandleCommand(context, argPos, _provider);
 			}
@@ -118,6 +130,43 @@ namespace NethysBot.Services
 			if (result.Error.HasValue)
 			{
 				
+			}
+		}
+		public async Task HandleInline(SocketCommandContext context)
+		{
+			SocketUserMessage message = context.Message;
+			if (message.Content.NullorEmpty()) return;
+
+			if (inlinereged.IsMatch(message.Content))
+			{
+				string tempalte = message.Content;
+				foreach (var match in inlinereged.Matches(message.Content).ToList())
+				{
+					try
+					{
+						var dice = Roller.Roll(match.Groups[1].Value);
+
+						tempalte = tempalte.Replace(match.Value, "[" + Helpers.Helpers.ParseResult(dice) + " = `" + dice.Value + "`]");
+					}
+					catch
+					{
+						continue;
+					}
+				}
+
+				var embed = new EmbedBuilder()
+					.WithCurrentTimestamp()
+					.WithDescription(tempalte)
+					.WithAuthor(context.User);
+				try
+				{
+					await context.Message.DeleteAsync();
+				}
+				catch
+				{
+
+				}
+				await context.Channel.SendMessageAsync(" ", false, embed.Build());
 			}
 		}
 	}
