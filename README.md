@@ -7,4 +7,5 @@ Wayfinder is a Pathfinder 2nd Edition utility bot designed to assist campaigns r
 * Commands to lookup Items, Feats, Spells, Traits or Backgrounds directly from Archive of Nethys.
 
 [Invite Wayfinder to your server.](https://discordapp.com/api/oauth2/authorize?client_id=663127829621506068&permissions=288832&scope=bot)
+
 [Join the discord server!](https://discord.gg/n2QccxW)
