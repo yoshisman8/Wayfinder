@@ -368,7 +368,7 @@ namespace NethysBot.Services
 						string icon = (string)skills[index]["ability"] ?? "intelligence";
 						sb.AppendLine(Icons.Scores[icon] + " " + ((string)skills[index]["lore"]).Substring(0, Math.Min(9, ((string)skills[index]["lore"]).Length)).Uppercase() + " " + Icons.Proficiency[(string)skills[index]["proficiency"]] + " " + bonus.ToModifierString());
 					}
-					else
+					else if(!((string)skills[index]["name"]).NullorEmpty() && !((string)skills[index]["ability"]).NullorEmpty())
 					{
 						int bonus = int.Parse((string)values?[((string)skills[index]["name"]).ToLower()]["bonus"] ?? "0") - int.Parse((string)values?[((string)skills[index]["name"]).ToLower()]["penalty"] ?? "0");
 						sb.AppendLine(Icons.Scores[(string)skills[index]["ability"]] + " " + ((string)skills[index]["name"]).Substring(0, Math.Min(9, ((string)skills[index]["name"]).Length)).Uppercase() + " " + Icons.Proficiency[(string)skills[index]["proficiency"]] + " " + bonus.ToModifierString());
