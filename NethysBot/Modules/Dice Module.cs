@@ -774,23 +774,28 @@ namespace NethysBot.Modules
 							range += r2;
 						}
 						summary += "**Range**: " + range + "ft.\n";
-					}
-					else
-					{
-						dmgtype = "Bludgeoning";
-					}
 
-					if ((string)s["attack"] == "melee" || ((string)s["attack"]).NullorEmpty())
+						if((string)i["attack"] == "melee")
+						{
+							hit = (string)values["melee " + (string)s["name"]]["bonus"];
+							penalties = (string)values["melee " + (string)s["name"]]["penalty"];
+						}
+						else if((string)i["attack"] == "ranged")
+						{
+							hit = (string)values["ranged " + (string)s["name"]]["bonus"];
+							penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
+						}
+					}
+					else if ((string)s["attack"] == "melee")
 					{
 						hit = (string)values["melee " + (string)s["name"]]["bonus"];
 						penalties = (string)values["melee " + (string)s["name"]]["penalty"];
 					}
-					else
+					else if((string)s["attack"] == "ranged")
 					{
 						hit = (string)values["ranged " + (string)s["name"]]["bonus"];
 						penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
 					}
-
 					damagebonus = (string)values["damage " + (string)s["name"]]["value"];
 
 					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
