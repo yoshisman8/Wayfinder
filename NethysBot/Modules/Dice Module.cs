@@ -22,6 +22,7 @@ namespace NethysBot.Modules
 		// private Regex DiceRegex = new Regex(@"(\d?[dD]\d)+\s*((\+|\-|)?\s*(\d+)?)*"); TO BE DELETED
 		private Regex AttributeRegex = new Regex(@"(\{(\w+)\})");
 		private Regex BonusRegex = new Regex(@"[\+\-]+\s?\d+");
+		private Regex DmgRegex = new Regex(@"(\w+)\s*(\d+[dD]\d+\s*[+-]*\s*\d*|\d+\s*[+-]*\s*\d*[dD]\d*|\d+)");
 
 		[Command("Roll"), Alias("R", "Dice")]
 		[Summary("Make a dice roll.")]
@@ -573,7 +574,6 @@ namespace NethysBot.Modules
 
 				if ((string)s["attack"] == "spell")
 				{
-					dmgtype = (string)s["overridedamage"] ?? "Magic";
 					JToken cl = null;
 
 					var classes = await SheetService.Get(c, "classes");
@@ -606,12 +606,6 @@ namespace NethysBot.Modules
 
 					int dc = int.Parse(hit ?? "0") + 10;
 
-					dmg = (string)s["extradamage"];
-
-					if (!dmg.NullorEmpty() && AttributeRegex.IsMatch(dmg))
-					{
-						dmg = await ParseValues(dmg, c, values);
-					}
 
 					string summary = "";
 
@@ -633,19 +627,26 @@ namespace NethysBot.Modules
 						}
 						embed.WithTitle(c.Name + " casts " + (sp["name"] ?? "Unnamed Spell") + "!");
 					}
-					if (!dmg.NullorEmpty())
+
+					dmg = (string)s["extradamage"];
+					if (!dmg.NullorEmpty() && AttributeRegex.IsMatch(dmg))
 					{
-						try
-						{
-							RollResult result2 = Roller.Roll(dmg.ToLower() + damagebonus.ToLower());
+						dmg = await ParseValues(dmg, c, values);
+					}
 
-							summary += "\n**" + dmgtype.Uppercase() + " damage**: " + result2.ParseResult() + " = `" + result2.Value + "` ";
-
-						}
-						catch
+					if (DmgRegex.IsMatch(dmg))
+					{
+						foreach (var m in DmgRegex.Matches(dmg).ToList())
 						{
-							await ReplyAsync("It seems like this strike doesn't have a valid dice roll on its damage or additional damage fields. If this is a spell make sure you have a valid dice expression on the damage fields.");
-							return;
+							try
+							{
+								RollResult dmgroll = Roller.Roll(m.Groups[2].Value);
+								summary += "\n**" + m.Groups[1].Value + " damage**: " + dmgroll.ParseResult() + " = `" + dmgroll.Value + "` ";
+							}
+							catch
+							{
+								continue;
+							}
 						}
 					}
 
@@ -689,15 +690,15 @@ namespace NethysBot.Modules
 					summary += "**Range** " + range + "ft.\n";
 
 
-					if ((string)s["attackcustom"] == "melee" || ((string)s["attack"]).NullorEmpty())
-					{
-						hit = (string)values["melee " + (string)s["name"]]["bonus"];
-						penalties = (string)values["melee " + (string)s["name"]]["penalty"];
-					}
-					else
+					if ((string)s["attackcustom"] == "ranged" || ((string)s["attack"]).NullorEmpty())
 					{
 						hit = (string)values["ranged " + (string)s["name"]]["bonus"];
 						penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
+					}
+					else
+					{
+						hit = (string)values["melee " + (string)s["name"]]["bonus"];
+						penalties = (string)values["melee " + (string)s["name"]]["penalty"];
 					}
 
 					damagebonus = (string)values["damage " + (string)s["name"]]["value"];
@@ -719,13 +720,27 @@ namespace NethysBot.Modules
 
 							if (!((string)s["extradamage"]).NullorEmpty())
 							{
-								string extra = (string)s["extradamage"];
-								if (AttributeRegex.IsMatch(extra))
+								string extradmg = (string)s["extradamage"];
+								if (!extradmg.NullorEmpty() && AttributeRegex.IsMatch(extradmg))
 								{
-									extra = await ParseValues(extra, c, values);
+									extradmg = await ParseValues(extradmg, c, values);
 								}
-								RollResult result3 = Roller.Roll(extra);
-								summary += "\n**" + ((string)s["overridedamage"]).Uppercase() + " damage**: " + result3.ParseResult() + " = `" + result3.Value + "`";
+
+								if (DmgRegex.IsMatch(extradmg))
+								{
+									foreach (var m in DmgRegex.Matches(extradmg).ToList())
+									{
+										try
+										{
+											RollResult dmgroll = Roller.Roll(m.Groups[2].Value);
+											summary += "\n**" + m.Groups[1].Value + " damage**: " + dmgroll.ParseResult() + " = `" + dmgroll.Value + "` ";
+										}
+										catch
+										{
+											continue;
+										}
+									}
+								}
 							}
 						}
 						catch
@@ -786,7 +801,8 @@ namespace NethysBot.Modules
 							penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
 						}
 					}
-					else if ((string)s["attack"] == "melee")
+					
+					if ((string)s["attack"] == "melee")
 					{
 						hit = (string)values["melee " + (string)s["name"]]["bonus"];
 						penalties = (string)values["melee " + (string)s["name"]]["penalty"];
@@ -815,13 +831,27 @@ namespace NethysBot.Modules
 
 							if (!((string)s["extradamage"]).NullorEmpty())
 							{
-								string extra = (string)s["extradamage"];
-								if (AttributeRegex.IsMatch(extra))
+								string extradmg = (string)s["extradamage"];
+								if (!extradmg.NullorEmpty() && AttributeRegex.IsMatch(extradmg))
 								{
-									extra = await ParseValues(extra, c, values);
+									extradmg = await ParseValues(extradmg, c, values);
 								}
-								RollResult result3 = Roller.Roll(extra);
-								summary += "\n**" + ((string)s["overridedamage"]).Uppercase() + " damage**: " + result3.ParseResult() + " = `" + result3.Value + "`";
+
+								if (DmgRegex.IsMatch(extradmg))
+								{
+									foreach (var m in DmgRegex.Matches(extradmg).ToList())
+									{
+										try
+										{
+											RollResult dmgroll = Roller.Roll(m.Groups[2].Value);
+											summary += "\n**" + m.Groups[1].Value + " damage**: " + dmgroll.ParseResult() + " = `" + dmgroll.Value + "` ";
+										}
+										catch
+										{
+											continue;
+										}
+									}
+								}
 							}
 						}
 						catch
