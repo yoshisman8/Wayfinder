@@ -345,7 +345,8 @@ namespace NethysBot.Helpers
 			{"custom","<:custom:671802295260020786>" },
 			{"spell","<:spell:671803477193785365>" },
 			{"melee","<:melee:671802294911762484>" },
-			{"ranged","<:ranged:671802295138385930>" }
+			{"ranged","<:ranged:671802295138385930>" },
+			{"weapon","<:custom:671802295260020786>" }
 		};
 	}
 }
