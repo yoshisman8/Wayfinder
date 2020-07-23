@@ -671,8 +671,8 @@ namespace NethysBot.Modules
 			var embed = new EmbedBuilder()
 				.WithTitle("Encounter")
 				.WithDescription("Started? " + (b.Started ? "Yes" : "No") + Environment.NewLine +
-				"Round: `" + b.Round + "`" + elapsedEffects)
-				.AddField("Game Master", context.Client.GetUser(b.Director).Mention, true);
+				"Round: `" + b.Round + "`" + elapsedEffects +
+				Environment.NewLine + "Game Master: "+ context.Client.GetUser(b.Director).Mention);
 			var summary = new StringBuilder();
 			foreach (var p in b.Participants)
 			{
