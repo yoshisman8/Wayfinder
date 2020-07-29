@@ -395,7 +395,7 @@ namespace NethysBot.Modules
 				b.Effects.Remove(be);
 			}
 			UpdateBattle(b);
-			await ReplyAsync(p.Name + " has been removed form initiative.");
+			await ReplyAsync(p.Name + " has been removed from initiative.");
 		}
 
 		[Command("ForceEnd")]

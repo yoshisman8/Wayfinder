@@ -609,9 +609,13 @@ namespace NethysBot.Modules
 
 					string summary = "";
 
-					var result = Roller.Roll("d20 + " + hit +(Bonuses.Length >0?string.Join(" ",Bonuses):""));
+					if (!((string)s["attackroll"]).NullorEmpty() && (bool)s["attackroll"] == true)
+					{
+						var result = Roller.Roll("d20 + " + hit + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
 
-					summary += "**Spell Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
+
+						summary += "**Spell Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
+					}
 
 					if (!((string)s["spell"]).NullorEmpty())
 					{
