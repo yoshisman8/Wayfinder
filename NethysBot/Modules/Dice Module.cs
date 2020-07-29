@@ -794,15 +794,18 @@ namespace NethysBot.Modules
 						}
 						summary += "**Range**: " + range + "ft.\n";
 
-						if((string)i["attack"] == "melee")
+						if ((string)s["attack"] == "weapon")
 						{
-							hit = (string)values["melee " + (string)s["name"]]["bonus"];
-							penalties = (string)values["melee " + (string)s["name"]]["penalty"];
-						}
-						else if((string)i["attack"] == "ranged")
-						{
-							hit = (string)values["ranged " + (string)s["name"]]["bonus"];
-							penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
+							if ((string)i["attack"] == "melee")
+							{
+								hit = (string)values["melee " + (string)s["name"]]["bonus"];
+								penalties = (string)values["melee " + (string)s["name"]]["penalty"];
+							}
+							else if ((string)i["attack"] == "ranged")
+							{
+								hit = (string)values["ranged " + (string)s["name"]]["bonus"];
+								penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
+							}
 						}
 					}
 					
@@ -816,6 +819,7 @@ namespace NethysBot.Modules
 						hit = (string)values["ranged " + (string)s["name"]]["bonus"];
 						penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
 					}
+					
 					damagebonus = (string)values["damage " + (string)s["name"]]["value"];
 
 					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
