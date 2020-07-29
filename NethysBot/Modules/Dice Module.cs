@@ -880,7 +880,7 @@ namespace NethysBot.Modules
 			}
 		}
 
-		public enum Saves { fort = 1, fortitude = 1, reflex = 2, will = 3 }
+		public enum Saves { fort = 1, fortitude = 1, f = 1, reflex = 2, r = 2, will = 3, w = 3 }
 		public enum Ability { strength = 1, str = 1, dexterity = 2, dex = 2, constitution = 3, con = 3, intelligence = 4, wisdom = 5, wis = 5, charisma = 6, cha = 6 }
 
 		private string[] DieScale = { "d1","d2","d4","d6","d8","d10", "d12" };
