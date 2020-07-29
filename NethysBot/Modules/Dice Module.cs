@@ -609,13 +609,7 @@ namespace NethysBot.Modules
 
 					string summary = "";
 
-					if (!((string)s["attackroll"]).NullorEmpty() && (bool)s["attackroll"] == true)
-					{
-						var result = Roller.Roll("d20 + " + hit + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
-
-
-						summary += "**Spell Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
-					}
+					
 
 					if (!((string)s["spell"]).NullorEmpty())
 					{
@@ -624,6 +618,12 @@ namespace NethysBot.Modules
 						if (!((string)sp["body"]).NullorEmpty())
 						{
 							embed.AddField("Spell description", sp["body"]);
+						}
+						if (!((string)sp["attackroll"]).NullorEmpty() && (bool)sp["attackroll"])
+						{
+							var result = Roller.Roll("d20 + " + hit + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
+
+							summary += "**Spell Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
 						}
 						if (!((string)sp["savingthrow"]).NullorEmpty())
 						{
