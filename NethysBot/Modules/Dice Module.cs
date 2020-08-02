@@ -617,7 +617,20 @@ namespace NethysBot.Modules
 						var sp = spells.First(x => (string)x["id"] == (string)s["spell"]);
 						if (!((string)sp["body"]).NullorEmpty())
 						{
-							embed.AddField("Spell description", sp["body"]);
+							var sb = new StringBuilder();
+							sb.AppendLine((string)sp["body"]);
+							if (sb.Length <= 1024)
+							{
+								embed.AddField("Spell Description", sb.ToString());
+							}
+							else
+							{
+								var segments = sb.ToString().Split(1000).ToArray();
+								for (int i = 0; i < segments.Length; i++)
+								{
+									embed.AddField("Spell Description (" + (i + 1) + "/" + (segments.Length) + ")", segments[i]);
+								}
+							}
 						}
 						if (!((string)sp["attackroll"]).NullorEmpty() && (bool)sp["attackroll"])
 						{
