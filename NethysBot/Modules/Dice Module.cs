@@ -711,22 +711,23 @@ namespace NethysBot.Modules
 					{
 						hit = (string)values["ranged " + (string)s["name"]]["bonus"];
 						penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
+						var result = Roller.Roll("d20 + " + hit + (penalties != "0" ? "-" + penalties : "") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
+
+						summary += "**Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
 					}
-					else
+					else if ((string)s["attackcustom"] == "melee" || ((string)s["attack"]).NullorEmpty())
 					{
 						hit = (string)values["melee " + (string)s["name"]]["bonus"];
 						penalties = (string)values["melee " + (string)s["name"]]["penalty"];
+						var result = Roller.Roll("d20 + " + hit + (penalties != "0" ? "-" + penalties : "") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
+
+						summary += "**Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
 					}
 
 					damagebonus = (string)values["damage " + (string)s["name"]]["value"];
 
 					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
 
-					
-
-					var result = Roller.Roll("d20 + " + hit + (penalties != "0" ? "-" + penalties : "") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
-
-					summary += "**Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
 
 					if (!dmg.NullorEmpty())
 					{
