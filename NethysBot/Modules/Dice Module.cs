@@ -617,7 +617,20 @@ namespace NethysBot.Modules
 						var sp = spells.First(x => (string)x["id"] == (string)s["spell"]);
 						if (!((string)sp["body"]).NullorEmpty())
 						{
-							embed.AddField("Spell description", sp["body"]);
+							var sb = new StringBuilder();
+							sb.AppendLine((string)sp["body"]);
+							if (sb.Length <= 1024)
+							{
+								embed.AddField("Spell Description", sb.ToString());
+							}
+							else
+							{
+								var segments = sb.ToString().Split(1000).ToArray();
+								for (int i = 0; i < segments.Length; i++)
+								{
+									embed.AddField("Spell Description (" + (i + 1) + "/" + (segments.Length) + ")", segments[i]);
+								}
+							}
 						}
 						if (!((string)sp["attackroll"]).NullorEmpty() && (bool)sp["attackroll"])
 						{
@@ -698,22 +711,23 @@ namespace NethysBot.Modules
 					{
 						hit = (string)values["ranged " + (string)s["name"]]["bonus"];
 						penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
+						var result = Roller.Roll("d20 + " + hit + (penalties != "0" ? "-" + penalties : "") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
+
+						summary += "**Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
 					}
-					else
+					else if ((string)s["attackcustom"] == "melee" || ((string)s["attack"]).NullorEmpty())
 					{
 						hit = (string)values["melee " + (string)s["name"]]["bonus"];
 						penalties = (string)values["melee " + (string)s["name"]]["penalty"];
+						var result = Roller.Roll("d20 + " + hit + (penalties != "0" ? "-" + penalties : "") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
+
+						summary += "**Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
 					}
 
 					damagebonus = (string)values["damage " + (string)s["name"]]["value"];
 
 					dmg = (string)values["damagedice " + (string)s["name"]]["value"] + GetDie((int)values["damagedie " + (string)s["name"]]["value"]);
 
-					
-
-					var result = Roller.Roll("d20 + " + hit + (penalties != "0" ? "-" + penalties : "") + (Bonuses.Length > 0 ? string.Join(" ", Bonuses) : ""));
-
-					summary += "**Attack roll**: " + result.ParseResult() + " = `" + result.Value + "`";
 
 					if (!dmg.NullorEmpty())
 					{
