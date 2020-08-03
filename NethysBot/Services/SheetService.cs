@@ -161,7 +161,7 @@ namespace NethysBot.Services
 				{
 					if (((string)n["body"]).IsImageUrl())
 					{
-						character.FamImg = (string)n["body"];
+						character.ImageUrl = (string)n["body"];
 						break;
 					}
 				}
