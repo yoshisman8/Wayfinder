@@ -93,7 +93,7 @@ namespace NethysBot.Services
 						break;
 					}
 				}
-				foreach (var n in notes.Where(x => (string)x["uiid"] == "companions"))
+				foreach (var n in notes.Where(x => (string)x["uiid"] == "companion"))
 				{
 					if (((string)n["body"]).IsImageUrl())
 					{
@@ -157,7 +157,7 @@ namespace NethysBot.Services
 						break;
 					}
 				}
-				foreach (var n in notes.Where(x => (string)x["uiid"] == "companions"))
+				foreach (var n in notes.Where(x => (string)x["uiid"] == "companion"))
 				{
 					if (((string)n["body"]).IsImageUrl())
 					{
@@ -281,7 +281,7 @@ namespace NethysBot.Services
 			sb.AppendLine("Lv" + (string)full["level"] + (((string)full["ancestry"]).NullorEmpty() ? "" : " " + (string)full["ancestry"]) + (full["classes"].HasValues ? " " + (string)full["classes"][0]["name"] : " Adventurer"));
 			sb.AppendLine(Icons.Sheet["hp"] + " HP `" + ((int)(values?["hp"]["value"]??0) - (int)(full["damage"] ?? 0)) + "/" + (values?["hp"]["value"] ?? 0) + "`");
 			sb.AppendLine(Icons.Sheet["ac"] + " AC `" + (values?["armor class"]["value"]??"Unknown") + "`");
-			sb.AppendLine(Icons.Sheet["per"] + " Perception `" + ((int)(values?["perception"]["bonus"]??0)).ToModifierString() + "` (DC " + (values["perception dc"]["value"]??"Unknown") + ")");
+			sb.AppendLine(Icons.Sheet["per"] + " Perception `" + ((int)(values?["perception"]["bonus"]??0) - (int)(values?["perception"]["penalty"]??0)).ToModifierString() + "` (DC " + (10 + (int)(values?["perception"]["bonus"] ?? 0) - (int)(values?["perception"]["penalty"] ?? 0)) + ")");
 
 			embed.WithDescription(sb.ToString());
 			sb.Clear();
@@ -322,9 +322,9 @@ namespace NethysBot.Services
 			embed.AddField("Abilities", sb.ToString(), true);
 			sb.Clear();
 
-			sb.AppendLine(Icons.Sheet["fort"] + " `" + ((int)(values?["fortitude"]?["bonus"]??0) - (int)(values["fortitude"]["penalty"]??0)).ToModifierString() + "` (DC: "+values["fortitude dc"]["value"]+")");
-			sb.AppendLine(Icons.Sheet["ref"] + " `" + ((int)(values?["reflex"]?["bonus"]??0) - (int)(values["reflex"]["penalty"] ?? 0)).ToModifierString() + "` (DC: " + values["reflex dc"]["value"] + ")");
-			sb.AppendLine(Icons.Sheet["will"] + " `" + ((int)(values?["will"]?["bonus"]??0) - (int)(values["will"]["penalty"] ?? 0)).ToModifierString() + "` (DC: " + values["will dc"]["value"] + ")");
+			sb.AppendLine(Icons.Sheet["fort"] + " `" + ((int)(values?["fortitude"]?["bonus"]??0) - (int)(values["fortitude"]["penalty"]??0)).ToModifierString() + "` (DC: "+ (10 + (int)(values?["fortitude"]["bonus"] ?? 0) - (int)(values?["fortitude"]["penalty"] ?? 0)) + ")");
+			sb.AppendLine(Icons.Sheet["ref"] + " `" + ((int)(values?["reflex"]?["bonus"]??0) - (int)(values["reflex"]["penalty"] ?? 0)).ToModifierString() + "` (DC: " + (10 + (int)(values?["reflex"]["bonus"] ?? 0) - (int)(values?["reflex"]["penalty"] ?? 0)) + ")");
+			sb.AppendLine(Icons.Sheet["will"] + " `" + ((int)(values?["will"]?["bonus"]??0) - (int)(values["will"]["penalty"] ?? 0)).ToModifierString() + "` (DC: " + (10 + (int)(values?["will"]["bonus"] ?? 0) - (int)(values?["will"]["penalty"] ?? 0)) + ")");
 
 			embed.AddField("Defenses", sb.ToString(), true);
 			sb.Clear();
