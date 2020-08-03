@@ -19,7 +19,13 @@ namespace NethysBot.Modules
 		[Summary("Changes the color of the embed in your character's sheet.")]
 		public async Task SetColor(string color, string comp = null)
 		{
-			if (uint.TryParse(color.Remove(0,1), NumberStyles.HexNumber, null, out uint colorvalue))
+			if (color.StartsWith("#"))
+			{
+				color = color.Remove(0, 1);
+			}
+
+
+			if (uint.TryParse(color, NumberStyles.HexNumber, null, out uint colorvalue))
 			{
 				var col = new Color(colorvalue);
 
