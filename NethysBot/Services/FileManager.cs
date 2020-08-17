@@ -204,13 +204,18 @@ namespace NethysBot.Services
 		public EmbedBuilder EmbedItem(JToken i)
 		{
 			var embed = new EmbedBuilder()
-				.WithTitle((string)i["name"] ?? "Unammed Item")
-				.AddField("Traits", i["traits"] ?? "No Traits", true)
-				.AddField("Type", (i["type"] ?? "Item") + " " + (i["level"] ?? 0), true)
-				.AddField("Status", Icons.Sheet["hp"] + " HP " + ((int)i["hp"] - (int)(i["damage"] ?? 0)) + "/" + i["hp"] +
-					"\n" + Icons.Sheet["ac"] + " Hardness " + (i["hardness"]??0), true)
-				.WithDescription("Price: " + (i["price"] ?? 0) + " " + i["priceunit"] + "\n" +
-					"Bulk: " + (i["bulk"] ?? 0));
+				.WithTitle(((string)i["name"]).NullorEmpty() ? "Unammed Item" : (string)i["name"]);
+
+			embed.AddField("Traits", ((string)i["traits"]).NullorEmpty() ? "No traits" : (string)i["traits"], true);
+
+			embed.AddField("Type", (((string)i["type"]).NullorEmpty() ? "Item" : (string)i["type"]) + " " + (i["level"] ?? 0), true);
+
+			embed.AddField("Status", Icons.Sheet["hp"] + " HP " + ((int)i["hpmax"] - (int)(i["damage"] ?? 0)) + "/" + i["hpmax"] +
+				"\n" + Icons.Sheet["ac"] + " Hardness " + (i["hardness"] ?? 0), true);
+
+			embed.WithDescription("Price: " + (i["price"] ?? 0) + " " + i["priceunit"] + "\n" +
+				"Bulk: " + (i["bulk"] ?? 0));
+
 			if ((string)i["type"] == "armor" || (string)i["type"] == "shield")
 			{
 				embed.AddField("Armor bonus", "**Category**: " + (i["category"] ?? "Uncategorized") +
