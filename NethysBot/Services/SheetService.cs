@@ -1010,7 +1010,7 @@ namespace NethysBot.Services
 				.WithThumbnailUrl(c.FamImg);
 			var sb = new StringBuilder();
 
-			sb.AppendLine(Icons.Sheet["hp"] + " HP `" + ((int)(values["famhp"]["bonus"] ?? 0) - (int)(json["damage"] ?? 0)) + "/" + (values["famhp"]["bonus"] ?? 0) + "`");
+			sb.AppendLine(Icons.Sheet["hp"] + " HP `" + ((int)(values["famhp "+ name]["bonus"] ?? 0) - (int)(json["damage"] ?? 0)) + "/" + (values["famhp "+ name]["bonus"] ?? 0) + "`");
 			sb.AppendLine(Icons.Sheet["ac"] + " AC `" + (values["famac "+name]["value"] ?? "Unknown") + "`");
 			sb.AppendLine(Icons.Sheet["per"] + " Perception `" + ((int)(values["famperception " + name]["bonus"] ?? 0)).ToModifierString() + "`");
 			sb.AppendLine("Resistances: \n" + json["resist"]);

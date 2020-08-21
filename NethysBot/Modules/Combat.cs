@@ -63,7 +63,7 @@ namespace NethysBot.Modules
 						var embed = new EmbedBuilder().WithTitle("Roll for initiative!")
 							.WithDescription(Context.User.Username + " has started a new encounter!")
 							.AddField("Players", "Use the `!Initiative SkillName` command to enter initiative.\nYou can also use `!Initiative #` to add your initiative number manually.", true)
-							.AddField("Director", "Use `!AddNPC Initaitve Name` to add NPCs to the turn order.", true)
+							.AddField("Director", "Use `!AddNPC initiative Name` to add NPCs to the turn order.", true)
 							.AddField("Ready to go?", "Once all characters have been added, use the `!Encounter Start` command again to start the encounter.")
 							.AddField("Advancing Turns", "Use `!next` to end your turn and ping the next person in the initiative order.")
 							.AddField("Need more help?", "Use the `!Help Encounter` for a breakdown of all Encounter commands!");
