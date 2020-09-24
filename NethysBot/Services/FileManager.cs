@@ -50,6 +50,7 @@ namespace NethysBot.Services
 						 (string)s["type"] == "focus"
 					 select s;
 			Backgrounds = from b in tokens where (string)b["type"] == "background" select b;
+			Conditions = from c in tokens where (string)c["type"] == "condition" select c;
 
 			if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "data", "help.json")))
 			{
@@ -65,8 +66,8 @@ namespace NethysBot.Services
 		public IEnumerable<JToken> Spells { get; set; } // Contains types "spell", "ritual" and "focus"
 		public IEnumerable<JToken> Traits { get; set; }
 		public IEnumerable<JToken> Backgrounds { get; set; }
-		public enum Types { Actions, Feats, Features, Items, Spells, Traits, Backgrounds }
-
+		public IEnumerable<JToken> Conditions { get; set; }
+		
 		public IEnumerable<string> Categories { get; set; }
 		public JArray Commands { get; set; }
 
@@ -507,5 +508,34 @@ namespace NethysBot.Services
 			embed.WithColor(randomColor);
 			return embed;
 		}
+		public EmbedBuilder EmbedCondition(JToken c)
+		{
+			var embed = new EmbedBuilder()
+				.WithTitle((string)c["name"])
+				.WithUrl((string)c["src"]);
+
+			var sb = new StringBuilder();
+			sb.AppendLine((string)c["body"] ?? "No Description");
+
+			if (sb.Length <= 1024)
+			{
+				embed.AddField("Description", sb.ToString());
+			}
+			else
+			{
+				var segments = sb.ToString().Split(1000).ToArray();
+				for (int d = 0; d < segments.Length; d++)
+				{
+					embed.AddField("Description (" + (d + 1) + "/" + (segments.Length) + ")", segments[d]);
+				}
+			}
+
+			Random randonGen = new Random();
+			Color randomColor = new Color(randonGen.Next(255), randonGen.Next(255),
+			randonGen.Next(255));
+			embed.WithColor(randomColor);
+			return embed;
+		}
+	
 	}
 }

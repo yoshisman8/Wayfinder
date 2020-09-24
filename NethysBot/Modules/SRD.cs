@@ -14,7 +14,7 @@ namespace NethysBot.Modules
 	public class SRD : NethysBase<SocketCommandContext>
 	{
 		public FileManager FileManager { get; set; }
-		public enum Category { Item, Feat, Action, Spell, Trait, Background };
+		public enum Category { Item, Feat, Action, Spell, Trait, Background, Condition };
 		[Command("Wiki"), Alias("SRD")]
 		public async Task search(Category category, [Remainder] string Query)
 		{
@@ -38,6 +38,9 @@ namespace NethysBot.Modules
 					break;
 				case Category.Background:
 					results = FileManager.Backgrounds.Where(x => ((string)x["name"]).ToLower().StartsWith(Query.ToLower()));
+					break;
+				case Category.Condition:
+					results = FileManager.Conditions.Where(x => ((string)x["name"]).ToLower().StartsWith(Query.ToLower()));
 					break;
 			}
 			if (results.Count() == 0)
@@ -111,10 +114,13 @@ namespace NethysBot.Modules
 								embed = FileManager.EmbedSpell(results.ElementAt(index)).Build();
 								break;
 							case Category.Trait:
-								embed = FileManager.EmbedAction(results.ElementAt(index)).Build();
+								embed = FileManager.EmbedTrait(results.ElementAt(index)).Build();
 								break;
 							case Category.Background:
 								embed = FileManager.EmbedAction(results.ElementAt(index)).Build();
+								break;
+							case Category.Condition:
+								embed = FileManager.EmbedCondition(results.ElementAt(index)).Build();
 								break;
 						}
 
@@ -159,6 +165,9 @@ namespace NethysBot.Modules
 						break;
 					case Category.Background:
 						embed = FileManager.EmbedAction(results.FirstOrDefault()).Build();
+						break;
+					case Category.Condition:
+						embed = FileManager.EmbedCondition(results.FirstOrDefault()).Build();
 						break;
 				}
 
