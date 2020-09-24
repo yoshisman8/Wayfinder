@@ -231,7 +231,7 @@ namespace NethysBot.Modules
 			}
 		}
 		[Command("Save"), Alias("sv")]
-		public async Task Save(Saves Throw, params string[] args)
+		public async Task Save(string Throw, params string[] args)
 		{
 			Character c;
 			if (args.Length >= 1 && args.Contains("-c"))
@@ -284,40 +284,54 @@ namespace NethysBot.Modules
 					await ReplyAsync("You have no named familiars.");
 					return;
 				}
-				switch ((int)Throw)
+				if(Saves.TryGetValue(Throw.ToLower(),out int value))
 				{
-					case 1:
-						bonus = (int)values["famfort " + c.Familiar]["bonus"] + (int)values["famfort "+c.Familiar]["penalty"];
-						message = c.Name + "'s familiar makes a fortitude check!";
-						break;
-					case 2:
-						bonus = (int)values["famref " + c.Familiar]["bonus"] + (int)values["famref "+c.Familiar]["penalty"];
-						message = c.Name + "'s familiar makes a reflex check!";
-						break;
-					case 3:
-						bonus = (int)values["famwill " + c.Familiar]["bonus"] +(int)values["famwill "+c.Familiar]["penalty"];
-						message = c.Name + "'s familiar makes a will check!";
-						break;
+					switch (value)
+					{
+						case 1:
+							bonus = (int)values["famfort " + c.Familiar]["bonus"] - (int)values["famfort "+c.Familiar]["penalty"];
+							message = c.Name + "'s familiar makes a fortitude check!";
+							break;
+						case 2:
+							bonus = (int)values["famref " + c.Familiar]["bonus"] - (int)values["famref "+c.Familiar]["penalty"];
+							message = c.Name + "'s familiar makes a reflex check!";
+							break;
+						case 3:
+							bonus = (int)values["famwill " + c.Familiar]["bonus"] - (int)values["famwill "+c.Familiar]["penalty"];
+							message = c.Name + "'s familiar makes a will check!";
+							break;
+					}
+				}
+				else
+				{
+					await ReplyAsync(Context.User.Mention + ", invalid saving throw.");
 				}
 				arguments = arguments.Replace("-f", "");
 				embed.WithThumbnailUrl(c.FamImg);
 			}
 			else
 			{
-				switch ((int)Throw)
+				if(Saves.TryGetValue(Throw.ToLower(),out int value))
 				{
-					case 1:
-						bonus = (int)values["fortitude"]["bonus"] + (int)values["fortitude"]["penalty"];
-						message = c.Name + " makes a fortitude check!";
-						break;
-					case 2:
-						bonus = (int)values["reflex"]["bonus"] + (int)values["reflex"]["penalty"];
-						message = c.Name + " makes a reflex check!";
-						break;
-					case 3:
-						bonus = (int)values["will"]["bonus"] + (int)values["will"]["penalty"];
-						message = c.Name + " makes a will check!";
-						break;
+					switch (value)
+					{
+						case 1:
+							bonus = (int)values["fortitude"]["bonus"] - (int)values["fortitude"]["penalty"];
+							message = c.Name + " makes a fortitude check!";
+							break;
+						case 2:
+							bonus = (int)values["reflex"]["bonus"] - (int)values["reflex"]["penalty"];
+							message = c.Name + " makes a reflex check!";
+							break;
+						case 3:
+							bonus = (int)values["will"]["bonus"] - (int)values["will"]["penalty"];
+							message = c.Name + " makes a will check!";
+							break;
+					}
+				}
+				else
+				{
+					await ReplyAsync(Context.User.Mention + ", invalid saving throw.");
 				}
 				embed.WithThumbnailUrl(c.ImageUrl);
 			}
@@ -342,7 +356,7 @@ namespace NethysBot.Modules
 		}
 
 		[Command("Ability"), Alias("A","AbilityCheck")]
-		public async Task ability(Saves saves, params string[] args)
+		public async Task ability(Ability saves, params string[] args)
 		{
 			Character c;
 			if (args.Length >= 1 && args.Contains("-c"))
@@ -894,7 +908,17 @@ namespace NethysBot.Modules
 			}
 		}
 
-		public enum Saves { fort = 1, fortitude = 1, f = 1, reflex = 2, r = 2, will = 3, w = 3 }
+		public Dictionary<string, int> Saves = new Dictionary<string, int>()
+		{
+			{"fort",1 },
+			{"fortitude",1 },
+			{"f",1 },
+			{"reflex",2 },
+			{"ref",2 },
+			{"r",2 },
+			{"will",3 },
+			{"w",3 },
+		};
 		public enum Ability { strength = 1, str = 1, dexterity = 2, dex = 2, constitution = 3, con = 3, intelligence = 4, wisdom = 5, wis = 5, charisma = 6, cha = 6 }
 
 		private string[] DieScale = { "d1","d2","d4","d6","d8","d10", "d12" };
