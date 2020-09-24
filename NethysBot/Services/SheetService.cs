@@ -293,7 +293,7 @@ namespace NethysBot.Services
 				foreach (var cl in classes)
 				{
 					string ability = ((string)cl["ability"]).NullorEmpty() ? "" : Icons.Scores[(string)cl["ability"]] + " ";
-					sb.AppendLine(ability + ((string)cl["name"]).Uppercase() + " " + Icons.Proficiency[(string)cl["proficiency"]] + (c.Type == SheetType.Character?" (Class DC: " + (int)(values?[((string)cl["name"]).ToLower()+" dc"]["value"]??0) + ")":""));
+					sb.AppendLine(ability + (((string)cl["name"]).NullorEmpty()? "Unnamed class": ((string)cl["name"]).Uppercase()) + " " + Icons.Proficiency[(string)cl["proficiency"]] + (c.Type == SheetType.Character && !((string)cl["name"]).NullorEmpty()?" (Class DC: " + (int)(values?[((string)cl["name"]).ToLower()+" dc"]["value"]??0) + ")":""));
 				}
 				embed.AddField("Classes", sb.ToString());
 				sb.Clear();
