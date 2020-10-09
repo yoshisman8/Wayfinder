@@ -96,6 +96,7 @@ namespace NethysBot.Modules
 		[RequireContext(ContextType.Guild)]
 		public async Task Initiative(int number)
 		{
+			int random = new Random().Next(0, 100);
 			await Initiative(number, 0);
 		}
 
@@ -196,13 +197,13 @@ namespace NethysBot.Modules
 					if (b.Participants.Any(x => x.Name.ToLower() == c.Name.ToLower()))
 					{
 						var i = b.Participants.FindIndex(x => x.Name.ToLower() == c.Name.ToLower());
-						b.Participants[i] = new Participant() { Initiative = (int)results.Value, Tiebreaker = 0, Name = c.Name, Player = c.Owner };
+						b.Participants[i] = new Participant() { Initiative = (int)results.Value, Tiebreaker = bonus, Name = c.Name, Player = c.Owner };
 						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 						UpdateBattle(b);
 					}
 					else
 					{
-						b.Participants.Add(new Participant() { Initiative = (int)results.Value, Tiebreaker = 0, Name = c.Name, Player = c.Owner });
+						b.Participants.Add(new Participant() { Initiative = (int)results.Value, Tiebreaker = bonus, Name = c.Name, Player = c.Owner });
 						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 						UpdateBattle(b);
 					}
@@ -241,13 +242,13 @@ namespace NethysBot.Modules
 					if (b.Participants.Any(x => x.Name.ToLower() == c.Name.ToLower()))
 					{
 						var i = b.Participants.FindIndex(x => x.Name.ToLower() == c.Name.ToLower());
-						b.Participants[i] = new Participant() { Initiative = (int)results.Value, Tiebreaker = 0, Name = c.Name, Player = c.Owner };
+						b.Participants[i] = new Participant() { Initiative = (int)results.Value, Tiebreaker = bonus, Name = c.Name, Player = c.Owner };
 						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 						UpdateBattle(b);
 					}
 					else
 					{
-						b.Participants.Add(new Participant() { Initiative = (int)results.Value, Tiebreaker = 0, Name = c.Name, Player = c.Owner });
+						b.Participants.Add(new Participant() { Initiative = (int)results.Value, Tiebreaker = bonus, Name = c.Name, Player = c.Owner });
 						b.Participants = b.Participants.OrderBy(x => x.Initiative).ThenBy(x=> x.Tiebreaker).Reverse().ToList();
 						UpdateBattle(b);
 					}

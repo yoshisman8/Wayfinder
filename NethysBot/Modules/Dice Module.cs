@@ -681,6 +681,23 @@ namespace NethysBot.Modules
 						}
 					}
 
+					JToken details = s["details"];
+
+					if (details.HasValues)
+					{
+						foreach (var value in details.Where(x => (bool)x["active"] == true))
+						{
+							try
+							{
+								RollResult Eresult = Roller.Roll((string)value["comment"]);
+								summary += "\n**" + (((string)value["name"]).NullorEmpty() ? "Extra Damage (" + (((string)value["type"]).NullorEmpty() ? "Untyped" : (string)value["type"]) + ") " : (string)value["name"] + " (" + (((string)value["type"]).NullorEmpty() ? "Untyped" : (string)value["type"]) + ") ") + "**: " + Eresult.ParseResult() + " = `" + Eresult.Value + "`";
+							}
+							catch
+							{
+								continue;
+							}
+						}
+					}
 
 					embed.WithDescription(summary)
 						.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
@@ -781,7 +798,23 @@ namespace NethysBot.Modules
 							return;
 						}
 					}
+					JToken details = s["details"];
 
+					if (details.HasValues)
+					{
+						foreach (var value in details.Where(x => (bool)x["active"] == true))
+						{
+							try
+							{
+								RollResult Eresult = Roller.Roll((string)value["comment"]);
+								summary += "\n**" + (((string)value["name"]).NullorEmpty() ? "Extra Damage (" + (((string)value["type"]).NullorEmpty() ? "Untyped" : (string)value["type"]) + ") " : (string)value["name"] + " (" + (((string)value["type"]).NullorEmpty() ? "Untyped" : (string)value["type"]) + ") ") + "**: " + Eresult.ParseResult() + " = `" + Eresult.Value + "`";
+							}
+							catch
+							{
+								continue;
+							}
+						}
+					}
 
 					embed.WithDescription(summary)
 						.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
@@ -896,7 +929,23 @@ namespace NethysBot.Modules
 							return;
 						}
 					}
+					JToken details = s["details"];
 
+					if (details.HasValues)
+					{
+						foreach (var value in details.Where(x => (bool)x["active"] == true))
+						{
+							try
+							{
+								RollResult Eresult = Roller.Roll((string)value["comment"]);
+								summary += "\n**" + (((string)value["name"]).NullorEmpty() ? "Extra Damage (" + (((string)value["type"]).NullorEmpty() ? "Untyped" : (string)value["type"]) + ") " : (string)value["name"] + " (" + (((string)value["type"]).NullorEmpty() ? "Untyped" : (string)value["type"]) + ") ") + "**: " + Eresult.ParseResult() + " = `" + Eresult.Value + "`";
+							}
+							catch
+							{
+								continue;
+							}
+						}
+					}
 
 					embed.WithDescription(summary)
 						.WithFooter((c.ValuesLastUpdated.Outdated() ? "⚠️ Couldn't retrieve updated values. Roll might not be accurate" : DateTime.Now.ToString()));
