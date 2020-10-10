@@ -855,18 +855,15 @@ namespace NethysBot.Modules
 						}
 						summary += "**Range**: " + range + "ft.\n";
 
-						if ((string)s["attack"] == "weapon")
+						if ((string)i["attack"] == "melee")
 						{
-							if ((string)i["attack"] == "melee")
-							{
-								hit = (string)values["melee " + (string)s["name"]]["bonus"];
-								penalties = (string)values["melee " + (string)s["name"]]["penalty"];
-							}
-							else if ((string)i["attack"] == "ranged")
-							{
-								hit = (string)values["ranged " + (string)s["name"]]["bonus"];
-								penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
-							}
+							hit = (string)values["melee " + (string)s["name"]]["bonus"];
+							penalties = (string)values["melee " + (string)s["name"]]["penalty"];
+						}
+						else if ((string)i["attack"] == "ranged")
+						{
+							hit = (string)values["ranged " + (string)s["name"]]["bonus"];
+							penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
 						}
 					}
 					
