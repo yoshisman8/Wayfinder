@@ -696,7 +696,7 @@ namespace NethysBot.Modules
 
 					JToken details = s["details"];
 
-					if (details.HasValues)
+					if (details != null && details.HasValues)
 					{
 						foreach (var value in details.Where(x => (bool)x["active"] == true || Toggles.Contains(((string)x["name"]).ToLower())))
 						{
@@ -813,7 +813,7 @@ namespace NethysBot.Modules
 					}
 					JToken details = s["details"];
 
-					if (details.HasValues)
+					if (details != null && details.HasValues)
 					{
 						foreach (var value in details.Where(x => (bool)x["active"] == true || Toggles.Contains(((string)x["name"]).ToLower())))
 						{
@@ -941,7 +941,7 @@ namespace NethysBot.Modules
 					}
 					JToken details = s["details"];
 
-					if (details.HasValues)
+					if (details != null && details.HasValues)
 					{
 						foreach (var value in details.Where(x => (bool)x["active"] == true || Toggles.Contains(((string)x["name"]).ToLower())))
 						{
