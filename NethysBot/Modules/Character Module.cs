@@ -15,6 +15,7 @@ using Microsoft.VisualBasic;
 using System.Reflection.PortableExecutable;
 using System.Threading.Tasks.Dataflow;
 using System.Xml;
+using Discord.Rest;
 
 namespace NethysBot.Modules
 {
@@ -26,11 +27,11 @@ namespace NethysBot.Modules
 		[Summary("Import a character or companion from [pf2.tools](http://character.pf2.tools).")]
 		public async Task Import([Remainder] string url)
 		{
-			var user = GetUser();
-			var msg = await ReplyAsync("Importing character...");
+			User user = GetUser();
+			RestUserMessage msg = await ReplyAsync("Importing character...");
 			try
 			{
-				var character = await SheetService.NewCharacter(url, Context);
+				Character character = await SheetService.NewCharacter(url, Context);
 
 				switch (character.Type)
 				{
