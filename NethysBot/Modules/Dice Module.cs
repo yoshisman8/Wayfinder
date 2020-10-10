@@ -23,6 +23,7 @@ namespace NethysBot.Modules
 		private Regex AttributeRegex = new Regex(@"(\{(\w+)\})");
 		private Regex BonusRegex = new Regex(@"[\+\-]+\s?\d+");
 		private Regex DmgRegex = new Regex(@"(\w+)\s*(\d+[dD]\d+\s*[+-]*\s*\d*|\d+\s*[+-]*\s*\d*[dD]\d*|\d+)");
+		private Regex ToggleableRegex = new Regex(@"([-][tT]\s*([a-zA-Z0-9_ ]+)+)");
 
 		[Command("Roll"), Alias("R", "Dice")]
 		[Summary("Make a dice roll.")]
@@ -537,6 +538,18 @@ namespace NethysBot.Modules
 					args = args.Trim();
 				}
 
+				List<string> Toggles = new List<string>();
+				if (ToggleableRegex.IsMatch(args))
+				{
+					MatchCollection RawToggles = ToggleableRegex.Matches(args);
+					foreach (Match m in RawToggles)
+					{
+						args = args.Replace(m.Value, "");
+						Toggles.Add(m.Groups[2].Value.Trim());
+					}
+					args = args.Trim();
+				}
+
 				var Jstrikes = await SheetService.Get(c, "strikes");
 				var values = await SheetService.GetValues(c);
 
@@ -685,7 +698,7 @@ namespace NethysBot.Modules
 
 					if (details.HasValues)
 					{
-						foreach (var value in details.Where(x => (bool)x["active"] == true))
+						foreach (var value in details.Where(x => (bool)x["active"] == true || Toggles.Contains(((string)x["name"]).ToLower())))
 						{
 							try
 							{
@@ -802,7 +815,7 @@ namespace NethysBot.Modules
 
 					if (details.HasValues)
 					{
-						foreach (var value in details.Where(x => (bool)x["active"] == true))
+						foreach (var value in details.Where(x => (bool)x["active"] == true || Toggles.Contains(((string)x["name"]).ToLower())))
 						{
 							try
 							{
@@ -930,7 +943,7 @@ namespace NethysBot.Modules
 
 					if (details.HasValues)
 					{
-						foreach (var value in details.Where(x => (bool)x["active"] == true))
+						foreach (var value in details.Where(x => (bool)x["active"] == true || Toggles.Contains(((string)x["name"]).ToLower())))
 						{
 							try
 							{
