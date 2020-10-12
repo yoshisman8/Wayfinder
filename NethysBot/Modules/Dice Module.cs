@@ -108,7 +108,7 @@ namespace NethysBot.Modules
 			
 			var sheet = await SheetService.GetFullSheet(c);
 			var values = await SheetService.GetValues(c);
-;
+
 			if(values == null|| sheet == null)
 			{
 				var embed = new EmbedBuilder()
@@ -123,7 +123,7 @@ namespace NethysBot.Modules
 			if(Skill == "perception"||Skill== "per" || Skill == "perc")
 			{
 				var embed = new EmbedBuilder();
-				JToken bonus;
+				int bonus;
 				string message = "";
 				if (familiar)
 				{
@@ -138,11 +138,11 @@ namespace NethysBot.Modules
 				}
 				else
 				{
-					bonus = values["perception"]["bonus"] ?? 0;
+					bonus = (int) values["perception"]["bonus"] - (int)values["perception"]["penalty"];
 					message = c.Name + " makes a Perception check!";
 					embed.WithThumbnailUrl(c.ImageUrl);
 				}
-				var result = Roller.Roll("d20 + " + bonus + (Bonuses.Length>0?string.Join(" ",Bonuses):""));
+				var result = Roller.Roll("d20 + " + bonus  + (Bonuses.Length>0?string.Join(" ",Bonuses):""));
 
 				
 				embed.WithTitle(message)
@@ -164,7 +164,7 @@ namespace NethysBot.Modules
 			else
 			{
 				var embed = new EmbedBuilder();
-				JToken bonus;
+				int bonus;
 				string message = "";
 				if (familiar)
 				{
@@ -207,7 +207,7 @@ namespace NethysBot.Modules
 					var s = skill.FirstOrDefault();
 					string name = (string)s["lore"] ?? (string)s["name"];
 					message = c.Name + " makes " + (name.StartsWithVowel() ? "an " : "a ") + name.Uppercase() + " check!";
-					bonus = values[name.ToLower()]["bonus"] ?? 0;
+					bonus = (int)values["perception"]["bonus"] - (int)values["perception"]["penalty"];
 					embed.WithThumbnailUrl(c.ImageUrl);
 				}
 
@@ -408,27 +408,27 @@ namespace NethysBot.Modules
 			switch ((int)saves)
 			{
 				case 1:
-					bonus = ((int)values["strength"]["values"]).GetModifier();
+					bonus = ((int)values["strength"]["bonus"] - (int)values["strength"]["penalty"]).GetModifier();
 					message = c.Name + " makes a strength check!";
 					break;
 				case 2:
-					bonus = ((int)values["dexterity"]["values"]).GetModifier();
+					bonus = ((int)values["dexterity"]["bonus"] - (int)values["dexterity"]["penalty"]).GetModifier();
 					message = c.Name + " makes a dexterity check!";
 					break;
 				case 3:
-					bonus = ((int)values["constitution"]["values"]).GetModifier();
+					bonus = ((int)values["constitution"]["bonus"] - (int)values["constitution"]["penalty"]).GetModifier();
 					message = c.Name + " makes a constitution check!";
 					break;
 				case 4:
-					bonus = ((int)values["intelligence"]["values"]).GetModifier();
+					bonus = ((int)values["intelligence"]["bonus"] - (int)values["intelligence"]["penalty"]).GetModifier();
 					message = c.Name + " makes a intelligence check!";
 					break;
 				case 5:
-					bonus = ((int)values["wisdom"]["values"]).GetModifier();
+					bonus = ((int)values["wisdom"]["bonus"] - (int)values["wisdom"]["penalty"]).GetModifier();
 					message = c.Name + " makes a wisdom check!";
 					break;
 				case 6:
-					bonus = ((int)values["charisma"]["values"]).GetModifier();
+					bonus = ((int)values["charisma"]["bonus"] - (int)values["charisma"]["penalty"]).GetModifier();
 					message = c.Name + " makes a charisma check!";
 					break;
 			}
