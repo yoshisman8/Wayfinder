@@ -207,7 +207,7 @@ namespace NethysBot.Modules
 					var s = skill.FirstOrDefault();
 					string name = (string)s["lore"] ?? (string)s["name"];
 					message = c.Name + " makes " + (name.StartsWithVowel() ? "an " : "a ") + name.Uppercase() + " check!";
-					bonus = (int)values["perception"]["bonus"] - (int)values["perception"]["penalty"];
+					bonus = (int)values[name.ToLower()]["bonus"] - (int)values[name.ToLower()]["penalty"];
 					embed.WithThumbnailUrl(c.ImageUrl);
 				}
 
