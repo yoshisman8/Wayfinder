@@ -573,7 +573,7 @@ namespace NethysBot.Modules
 					await ReplyAsync("You have no strikes whose name starts with '" + args + "'.");
 					return;
 				}
-
+				string strikename = "";
 				var s = strikes.FirstOrDefault();
 				var embed = new EmbedBuilder()
 					.WithTitle(c.Name + " strikes with a " + (((string)s["name"]).NullorEmpty() ? "Unnamed Strike" : (string)s["name"]) + "!")
@@ -877,6 +877,10 @@ namespace NethysBot.Modules
 						{
 							hit = (string)values["ranged " + (string)s["name"]]["bonus"];
 							penalties = (string)values["ranged " + (string)s["name"]]["penalty"];
+						}
+						if (!((string)i["name"]).NullorEmpty())
+						{
+							embed.WithTitle(c.Name + " strikes with a " + (string)i["name"] + "!");
 						}
 					}
 					
