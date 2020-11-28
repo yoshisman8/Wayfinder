@@ -684,7 +684,7 @@ namespace NethysBot.Modules
 						{
 							try
 							{
-								RollResult dmgroll = Roller.Roll(m.Groups[2].Value);
+								RollResult dmgroll = Roller.Roll(m.Groups[2].Value.ToLower());
 								summary += "\n**" + m.Groups[1].Value + " damage**: " + dmgroll.ParseResult() + " = `" + dmgroll.Value + "` ";
 							}
 							catch
@@ -702,7 +702,7 @@ namespace NethysBot.Modules
 						{
 							try
 							{
-								RollResult Eresult = Roller.Roll((string)value["comment"]);
+								RollResult Eresult = Roller.Roll(((string)value["comment"]).ToLower());
 								summary += "\n**" + (((string)value["name"]).NullorEmpty() ? "Extra Damage (" + (((string)value["type"]).NullorEmpty() ? "Untyped" : (string)value["type"]) + ") " : (string)value["name"] + " (" + (((string)value["type"]).NullorEmpty() ? "Untyped" : (string)value["type"]) + ") ") + "**: " + Eresult.ParseResult() + " = `" + Eresult.Value + "`";
 							}
 							catch
