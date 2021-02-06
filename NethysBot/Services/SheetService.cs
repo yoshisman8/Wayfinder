@@ -738,7 +738,18 @@ namespace NethysBot.Services
 					sb.AppendLine("• " + (i["name"] ?? "Unnamed Item") + " [" + (i["type"] ?? "Item") + " " + (i["level"]??1) + "] x"+(i["quantity"]??1));
 				}
 
-				embed.AddField("Items", sb.ToString());
+				if (sb.Length <= 1024)
+				{
+					embed.AddField("Items", sb.ToString());
+				}
+				else
+				{
+					var segments = sb.ToString().Split(1000).ToArray();
+					for (int i = 0; i < segments.Length; i++)
+					{
+						embed.AddField("Items (" + (i + 1) + "/" + (segments.Length) + ")", segments[i]);
+					}
+				}
 			}
 
 			return embed.Build();
@@ -868,7 +879,7 @@ namespace NethysBot.Services
 
 			if (rituals.Count() > 0)
 			{
-				foreach (var s in focus)
+				foreach (var s in rituals)
 				{
 					var act = (string)s["actions"];
 
@@ -881,8 +892,7 @@ namespace NethysBot.Services
 					}
 					sb.Append((s["name"] ?? "Unnamed Spell") + " " + act + ", ");
 				}
-				string f = ((string)json["focusmax"]).NullorEmpty() ? "" : " [" + (json["focus"] ?? 0) + "/" + json["focusmax"] + "]";
-				embed.AddField("Rituals" + f, sb.ToString().TrimEnd().Substring(0, sb.Length - 2));
+				embed.AddField("Rituals", sb.ToString().TrimEnd().Substring(0, sb.Length - 2));
 				sb.Clear();
 			}
 
