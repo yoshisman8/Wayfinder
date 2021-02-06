@@ -868,7 +868,7 @@ namespace NethysBot.Services
 
 			if (rituals.Count() > 0)
 			{
-				foreach (var s in focus)
+				foreach (var s in rituals)
 				{
 					var act = (string)s["actions"];
 
@@ -886,7 +886,7 @@ namespace NethysBot.Services
 				sb.Clear();
 			}
 
-			var lv0 = from sp in spells where sp["cantrip"] != null select sp;
+			var lv0 = from sp in spells where sp["subtype"] != "cantrip" select sp;
 
 			if(lv0.Count() > 0)
 			{
@@ -922,11 +922,11 @@ namespace NethysBot.Services
 				sb.Clear();
 			}
 
-			for (int i = 1; i < 9; i++)
+			for (int i = 1; i <= 10; i++)
 			{
-				var sps = from sp in spells where sp["level"]!=null &&
-						  (string)sp["type"]=="spell" && 
-						  (int)sp["level"] == i 
+				var sps = from sp in spells where sp["level"]!=null && // One problem here is that level is set as blank for cantrips
+						  (string)sp["subtype"]=="spell" && 
+						  (int)sp["level"] == i // and here casting blank to int is crashing, maybe change the logic so blank == 0?
 						  select sp;
 				if (sps.Count() == 0) continue;
 
