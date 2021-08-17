@@ -37,11 +37,11 @@ namespace NethysBot.Modules
 				{
 					case Models.SheetType.Character:
 						user.Character = character;
-						await msg.ModifyAsync(x=>x.Content="The character `" + character.Name + "` (id `" + character.RemoteId + "`) has been successfully imported and has been assigned as your active character!");
+						await msg.Channel.SendMessageAsync("The character `" + character.Name + "` (id `" + character.RemoteId + "`) has been successfully imported and has been assigned as your active character!");
 						break;
 					case Models.SheetType.Companion:
 						user.Companion = character;
-						await msg.ModifyAsync(x=>x.Content= "The companion `" + character.Name + "` (id `" + character.RemoteId + "`) has been successfully imported and has been assigned as your active companion!");
+						await msg.Channel.SendMessageAsync("The companion `" + character.Name + "` (id `" + character.RemoteId + "`) has been successfully imported and has been assigned as your active companion!");
 						break;
 				}
 
