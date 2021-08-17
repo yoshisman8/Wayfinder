@@ -1,0 +1,5 @@
+{
+  "token": "string here",
+  "prefix": "!",
+  "AlwaysDownloadUsers": "true"
+}
