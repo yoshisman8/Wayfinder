@@ -594,7 +594,7 @@ namespace NethysBot.Modules
 			if (b.CurrentTurn.Player > 0)
 			{
 				var player = context.Client.GetUser(b.CurrentTurn.Player);
-				await channel.SendMessageAsync(player.Mention + ", " + b.CurrentTurn.Name + "'s turn!", false, DisplayBattle(b, context));
+				await channel.SendMessageAsync("<@" +b.CurrentTurn.Player + ">, " + b.CurrentTurn.Name + "'s turn!", false, DisplayBattle(b, context));
 			}
 			else
 			{
